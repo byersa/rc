@@ -1,6 +1,7 @@
 import org.moqui.impl.entity.EntityDefinition
 import org.moqui.impl.entity.EntityFacadeImpl
 import org.moqui.entity.EntityFind
+import org.moqui.entity.EntityDynamicView
 import org.moqui.impl.entity.EntityFindImpl
 import org.moqui.entity.EntityValue
 import org.moqui.impl.entity.EntityValueImpl
@@ -72,6 +73,21 @@ import org.moqui.impl.StupidUtilities
             partyViewEntityList = ef.list()
         }
         logger.info("In: DynamicViewTest, query on Party and Organization, partyViewEntityList: ${partyViewEntityList}")
+    List <EntityValue> partyListJson = new ArrayList()
+
+
+    partyViewEntityList.each {party ->
+        Map partyMap = ["partyId": party.partyId, "partyTypeEnumId": party.partyTypeEnumId]
+        EntityValue person, org
+        if (party.partyTypeEnumId == "PERSON") {
+            //person = ec.entity.makeFind("Person").condition(["partyId": party.partyId]).one()
+            partyMap["fullName"] = party.firstName + " " + party.lastName
+        } else {
+            //org = ec.entity.makeFind("Organization").condition(["partyId": party.partyId]).one()
+            partyMap["fullName"] = party.organizationName
+        }
+        partyListJson.push(partyMap)
+    }
     /*
     List <EntityValue> partyList = ec.entity.makeFind("Party").list()
     logger.info("partyList: ${partyList}")
@@ -92,5 +108,5 @@ import org.moqui.impl.StupidUtilities
     }
     */
     Map <String, Object> result = new HashMap()
-    result.items = []
+    result.items = partyListJson
     return result

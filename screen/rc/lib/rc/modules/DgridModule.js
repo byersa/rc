@@ -6,7 +6,7 @@ define([
 	    "dojo/_base/lang",
         'dojo/on',
         'dojo/request',
-        'dgrid/Observable',
+        'dojo/store/Observable',
         'dgrid/GridFromHtml',
         'dgrid/OnDemandList',
         'dgrid/Selection',
@@ -99,17 +99,19 @@ define([
         submitQuery: function(evt) {
             var values = this.get("value");
             var dgridContainer = this.getParent();
+            var thisGrid = dgridContainer.grid;
             var queryDeferred = request.post(dgridContainer.queryUrl, {
+                        handleAs: "json",
                     data: values
-                }).then(function(items) {
+                }).then(function(result) {
                     var tabContainer = dgridContainer.getParent();
                     var basicStore = new BasicStore({
-                        data: items
+                        data: result.items
                     });
                 
                     var newStore = new Observable(basicStore);
                     tabContainer.setStore(newStore);
-                    this.grid.setStore(newStore);
+                    thisGrid.setStore(newStore);
                     return;
                     }, function(err) {
                         //console.log(err);
