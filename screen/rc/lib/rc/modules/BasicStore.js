@@ -16,6 +16,9 @@ return declare("rc.modules.BasicStore", Memory, {
     
     constructor: function(/*dojo.store.JsonRest*/ options){
     	declare.safeMixin(this, options);
+        if (options.data) {
+            this.loadComplete = true;
+        }
         return;
     },
     
@@ -43,7 +46,7 @@ return declare("rc.modules.BasicStore", Memory, {
         var mainData;
         var _this = this;
         if (_this.loadComplete) {
-            mainData = _this.data;
+            mainData = {items:_this.data};
         } else {
             if (_this.isLoading) {
                 mainData = _this.dataDeferred;
@@ -53,10 +56,10 @@ return declare("rc.modules.BasicStore", Memory, {
         }
         
         var returnDeferred = when(mainData, function(dataRows) {
-            if (query) {
+            if (query.hasOwnProperty()) {
                 return _this.queryEngine(query, null)(dataRows.items);
             } else {
-                return mainData;
+                return dataRows.items;
             }
         });
         
