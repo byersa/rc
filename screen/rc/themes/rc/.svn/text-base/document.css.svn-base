@@ -1,0 +1,41 @@
+@import url("../../../dojo/resources/dojo.css");
+/* ======= Styling for the document itself (overriding dojo.css) ======== */
+.dbizdemo {
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  font-size: .688em;
+  color: #131313;
+}
+/* Headings */
+.dbizdemo h1 {
+  font-size: 1.545em;
+  margin-bottom: 0.727em;
+}
+.dbizdemo h2 {
+  font-size: 1.364em;
+  line-height: 1.455em;
+  margin-top: 1em;
+  margin-bottom: 0.60em;
+  font-weight: normal;
+}
+.dbizdemo h3,
+.dbizdemo h4,
+.dbizdemo h5,
+.dbizdemo h6 {
+  font-size: 1.091em;
+  font-weight: normal;
+}
+/* paragraphs, quotes and lists */
+.dbizdemo p {
+  line-height: 1.3em;
+}
+/* pre and code */
+.dbizdemo pre, .dbizdemo code {
+  font-family: inherit;
+  background-color: #efefef;
+  border: 1px solid #d3d3d3;
+}
+/* tables */
+.dbizdemo table.dojoTabular thead, .dbizdemo table.dojoTabular tfoot {
+  background-color: #efefef;
+  border: 1px solid #d3d3d3;
+}

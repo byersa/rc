@@ -1,0 +1,4 @@
+.dbizdemo .dijitTabContainerTop-tabs .dijitTabRtl, .dbizdemo .dijitTabContainerBottom-tabs .dijitTabRtl {
+  margin-right: 0;
+  margin-left: 1px;
+}

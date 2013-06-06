@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.1.xsd"
+        require-authentication="false">
+    <subscreens default-item="main" >
+        <subscreens-item name="main" location="component://rc/screen/rc/main.xml"/>
+        <subscreens-item name="Login" location="component://rc/screen/rc/Login.xml"/>
+        <subscreens-item name="dojo" location="component://dojo/screen/DojoApp.xml"/>
+        <subscreens-item name="admin" location="component://rc/screen/rc/admin.xml"/>
+        <subscreens-item name="rc" location="component://rc/screen/rc/lib/rc.xml"/>
+        <subscreens-item name="tools" location="component://tools/screen/Tools.xml"/>
+    </subscreens>
+    <widgets><subscreens-active id="root-active"/></widgets>
+</screen>

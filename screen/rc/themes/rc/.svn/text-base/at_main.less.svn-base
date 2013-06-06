@@ -1,0 +1,12 @@
+
+.dbizdemo #screensContainer {
+    width: 100%;
+    height: 100%;
+    border: 2px solid black;
+}
+
+.dbizdemo {
+    width: 100%;
+    height: 100%;
+    border: 2px solid red;
+}

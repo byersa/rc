@@ -1,0 +1,68 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>
+		Party Grid View
+	</title>
+</head>
+<body>
+        <script type="text/javascript">
+             function partyFullNameFormatter(item) {
+                 var returnString = item.firstName + " " + item.lastName;
+                 return returnString
+             }
+             function partyTypeFormatter(item) {
+                 var returnString = "";
+                 switch (item.partyType) {
+                     case "PERSON":
+                         returnString = "PERSON";
+                         break;
+                     case "ORGANIZATION":
+                         returnString = "ORGANIZATION";
+                         break;
+                     default:
+                         returnString = "UNKNOWN";
+                         break;
+                 }
+                 return returnString
+             }
+        </script>
+        
+        <div data-dojo-type="dijit/form/Form"
+             data-dojo-props="action: 'javascript:void(0)'">
+          <label for="partyTypeEnumId">Party Type</label>
+          <div name="partyTypeEnumId" data-dojo-type="dijit/form/FilteringSelect">
+            <option value="PARTY">Party</option>
+            <option value="ORGANIZATION">Organization</option>
+          </div>        
+          <label for="lastName">Last Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'lastName'"></div>
+          <label for="firstName">First Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'firstName'"></div>
+          <label for="organizationName">Organization Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'organizationName'"></div>
+          <label for="emailAddress">Email Address</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'emailAddress'"></div>
+            <div data-dojo-type="dijit/form/Button" type="submit">Submit</div>
+        </div>
+        
+        <div data-dojo-type="dijit/Toolbar">
+            <div data-dojo-type="dijit/form/CheckBox"></div>
+            <div data-dojo-type="dijit/form/Button" type="button">Query</div>
+        </div>
+		<table id="partyGridView">
+			<thead>
+				<tr>
+					<th data-dgrid-column="{field:'fullName'}">Name</th>
+					<th data-dgrid-column="{field:'partyTypeEnumId'}">Party Type</th>
+					<th data-dgrid-column="{field:'email'}">Email</th>
+					<th data-dgrid-column="{field:'phone'}">Phone</th>
+					<th data-dgrid-column="{field:'city'}">City</th>
+					<th data-dgrid-column="{field:'state'}">State</th>
+				</tr>
+			</thead>
+		</table>
+
+</body>
+</html>

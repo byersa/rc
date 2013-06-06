@@ -1,0 +1,97 @@
+/* ========= Styling rules to affect widgets ========= */
+.dbizdemo .dijitPopup {
+  -webkit-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+  -moz-box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.25);
+}
+.dbizdemo .dijitTooltipDialogPopup {
+  /* exception popups: do not use a shadow on these because they aren't rectangular */
+
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+}
+/* The highlight is shown in the ComboBox menu.  TODO: move to form/Common.less */
+.dbizdemo .dijitComboBoxHighlightMatch {
+  background-color: #abd6ff;
+}
+.dbizdemo .dijitFocusedLabel {
+  /* for checkboxes or radio buttons, hatch border around the corresponding label, to indicate focus */
+
+  outline: 1px dotted #494949;
+}
+/* Drag and Drop*/
+.dbizdemo .dojoDndItem {
+  border-color: rgba(0, 0, 0, 0);
+  -webkit-transition-duration: 0.25s;
+  -moz-transition-duration: 0.25s;
+  transition-duration: 0.25s;
+  -webkit-transition-property: background-color, border-color;
+  -moz-transition-property: background-color, border-color;
+  transition-property: background-color, border-color;
+}
+.dbizdemo .dojoDndItemOver {
+  background-color: #abd6ff;
+  background-image: url("images/standardGradient.png");
+  background-repeat: repeat-x;
+  background-image: -moz-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);
+  background-image: -webkit-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);
+  background-image: -o-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);
+  background-image: -ms-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);
+  _background-image: none;
+  padding: 1px;
+  border: solid 1px #759dc0;
+  color: #000000;
+}
+.dbizdemo .dojoDndItemAnchor, .dbizdemo .dojoDndItemSelected {
+  background-color: #cfe5fa;
+  background-image: url("images/standardGradient.png");
+  background-repeat: repeat-x;
+  background-image: -moz-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);
+  background-image: -webkit-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);
+  background-image: -o-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);
+  background-image: -ms-linear-gradient(rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0) 100%);
+  _background-image: none;
+  padding: 1px;
+  border: solid 1px #759dc0;
+  color: #000000;
+}
+.dbizdemo .dojoDndItemBefore, .dbizdemo .dojoDndItemAfter {
+  border-color: #759dc0;
+}
+.dbizdemo table.dojoDndAvatar {
+  border: 1px solid #b5bcc7;
+  border-collapse: collapse;
+  background-color: #ffffff;
+  -webkit-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  -moz-box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.dbizdemo .dojoDndAvatarHeader td {
+  height: 20px;
+  padding-left: 21px;
+}
+.dbizdemo.dojoDndMove .dojoDndAvatarHeader, .dbizdemo.dojoDndCopy .dojoDndAvatarHeader {
+  background-image: url("images/dnd.png");
+  background-repeat: no-repeat;
+  background-position: 2px -122px;
+}
+.dbizdemo .dojoDndAvatarItem td {
+  padding: 5px;
+}
+.dbizdemo.dojoDndMove .dojoDndAvatarHeader {
+  background-color: #f58383;
+  background-position: 2px -103px;
+}
+.dbizdemo.dojoDndCopy .dojoDndAvatarHeader {
+  background-color: #f58383;
+  background-position: 2px -68px;
+}
+.dbizdemo.dojoDndMove .dojoDndAvatarCanDrop .dojoDndAvatarHeader {
+  background-color: #97e68d;
+  background-position: 2px -33px;
+}
+.dbizdemo.dojoDndCopy .dojoDndAvatarCanDrop .dojoDndAvatarHeader {
+  background-color: #97e68d;
+  background-position: 2px 2px;
+}

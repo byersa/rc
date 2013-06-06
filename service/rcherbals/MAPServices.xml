@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-1.2.xsd">
+	<service verb="loadMAPViolations" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/map/LoadMAPViolations.groovy">
+	    <in-parameters>
+	        <parameter name="dummyIn" required="false"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="dummyOut" required="false"/>
+	    </out-parameters>
+	</service>
+</services>

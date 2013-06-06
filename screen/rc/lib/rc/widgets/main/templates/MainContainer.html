@@ -1,0 +1,30 @@
+<div id="mainScreenContainer" >
+  <div data-dojo-type="dijit.layout.ContentPane" id="main-container-header" region="top" >
+    <div class="logo">
+    </div>
+    <!-- -->
+    <div id="headerActiveUserStatus" style="visibility: hidden;">
+    </div>
+    <div class="userMenu">
+        <a id="signOutNavLink"
+           style="display:inline;"
+           data-dojo-attach-event="ondijitclick:_onSignOut"
+           role="presentation"
+           href="javascript://nop"><span></span>Sign Out
+        </a>
+        -
+        <a id="helpNavLink"
+           data-dojo-attach-event="ondijitclick:_onHelp"
+           role="presentation"
+           href="javascript://nop">Help
+        </a>
+    </div>
+    <!-- -->
+  </div>
+
+    <div data-dojo-type="dijit.layout.ContentPane" id="main-container-footer" data-dojo-props="region:'bottom'" >
+    </div>
+    <!--div data-dojo-type="dijit.layout.TabContainer" id="work" region="center"-->
+        <!--div data-dojo-type="dojox.layout.ContentPane" data-dojo-props="title: 'Properties', extractContent:'true', href:'cc/modules/dashboard/view/properties.html'"></div-->
+    <!--/div-->
+</div>

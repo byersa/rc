@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.1.xsd"
+        standalone="true"
+        default-menu-include="false" require-authentication="false">
+
+    <transition name="addParty">
+        <service-call name="rc.PartyServices.createParty" in-map="ec.web.parameters"
+                      web-send-json-response="true">
+        </service-call>
+        <default-response type="none"/>
+    </transition>
+    <transition name="getPartyList">
+        <service-call name="rcherbals.PartyServices.getPartyList" in-map="ec.web.parameters"
+                      web-send-json-response="true">
+        </service-call>
+        <default-response type="none"/>
+    </transition>
+    <transition name="queryParty">
+        <service-call name="rcherbals.PartyServices.queryParty" in-map="ec.web.parameters"
+                      web-send-json-response="true">
+        </service-call>
+        <default-response type="none"/>
+    </transition>
+    <widgets>
+
+    </widgets>
+</screen>

@@ -1,0 +1,262 @@
+
+.pe .dijitDialog .zIndex10 {
+	    z-index: 10;
+    }
+
+.pe .dijitDialog .zIndex20 {
+    z-index: 20;
+    }
+
+.pe .dijitDialog .zIndex30 {
+    z-index: 30;
+    }
+
+.pe .dijitDialog .zIndex40 {
+    z-index: 40;
+    }
+
+.pe .dijitContentPaneLoading {
+	background:url('images/loading.gif') no-repeat left center;
+	padding-left:25px; 
+}
+
+.pe .dijitContentPaneError {
+	background:url('images/warning.png') no-repeat left center;
+	padding-left:25px; 
+}
+
+.pe .testingContainer {
+	position: relative;
+	display: block;
+	overflow: hidden; 
+}	
+
+
+.pe .dijitTabLabels-bottom  {
+	 height: 150px;
+	 background-color: lightblue;
+}
+
+.pe .testingContentPane {
+	 height: 450px;
+}	
+.testingContentPane {
+	 height: 450px;
+}	
+
+.pe .dijitAlignTop .dijitTabSelected,
+{
+	margin-bottom: 4px;
+	background-color:#8f8;
+	vertical-align:top;
+}
+
+.pe .buttonArea {
+}
+.pe  .StatusButton,
+.pe .dijitToolbar .StatusButton {
+	width: 110px;
+	height: 25px;
+		background:url(../../../images/med_org_btn_110x25.gif) no-repeat left top;
+}
+
+.pe  .StatusButtonSml,
+.pe .dijitToolbar .StatusButtonSml {
+	width: 55px;
+	height: 25px;
+		background:url(../../../images/sm_org_btn_55x25.gif) no-repeat left top;
+}
+
+
+.pe .AnswerEmpty, .pe .AnswerSupplied, .pe .AnswerFlagged, .pe .AnswerFlaggedAndSupplied, .pe .AnswerCurrent  {
+	width: 22px;
+	height: 14px;
+	padding: 0px;
+	border: none;
+}
+	
+.pe .AnswerEmptyLabel, .pe .AnswerSuppliedLabel, .pe .AnswerFlaggedLabel,
+ .pe .AnswerFlaggedAndSuppliedLabel, .pe .AnswerCurrentLabel  {
+	padding: 0px;
+	font-family: sans-serif;
+	font-weight: bold;
+}
+	
+.pe .AnswerCurrentLabel {
+	color: black;
+}
+
+.pe .AnswerEmptyLabel {
+	color: white;
+}
+
+.pe .AnswerSuppliedLabel {
+	color: white;
+}
+
+.pe .AnswerFlaggedLabel {
+	color: #fc9;
+}
+
+.pe .AnswerFlaggedAndSuppliedLabel {
+	color: #fc9;
+}
+
+	
+.pe .AnswerEmpty {
+	background:url(/pe/images/buttons/bp_unanswered.png) no-repeat left top;
+}
+
+.pe .AnswerNow {
+	background:url(/pe/images/buttons/bp_now.png) no-repeat left top;
+}
+
+.pe .AnswerSupplied {
+	background:url(/pe/images/buttons/bp_answered.png) no-repeat left top;
+}
+
+.pe .AnswerFlagged {
+	background:url(/pe/images/buttons/bp_unanswered.png) no-repeat left center;
+}
+
+.pe .AnswerFlaggedAndSupplied {
+	background:url(/pe/images/buttons/bp_answered.png) no-repeat left center;
+}
+
+.pe .AnswerCurrent {
+	background:url(/pe/images/buttons/bp_now.png) no-repeat left center;
+}
+#timerpanetoolbar  .dijitToggleButtonIconChar,
+#buttonpadtoolbar .dijitToggleButtonIconChar {
+	display:inline !important;
+}
+
+#timerpanetoolbar  .dijitToggleButtonIconChar,
+#buttonpadtoolbar .dijitToggleButtonIconChar {
+	visibility:hidden;
+}
+
+#timerpanetoolbar  .dijitToggleButtonIconChar,
+#buttonpadtoolbar .dijitToggleButtonChecked .dijitToggleButtonIconChar {
+	visibility:visible !important;
+}
+
+.timerPaneIconImage{
+	background-image : url('/pe/images/buttons/timer_go.png');
+	background-repeat : no-repeat;
+	background-position : top left;
+}
+
+.dijitToggleButtonChecked  .timerPaneIconImage{
+	background-image : url('/pe/images/buttons/timer_stop.png');
+	background-repeat : no-repeat;
+	background-position : top left;
+}
+
+.hideTimerPaneIconImage{
+	background-image : url('/pe/images/buttons/timer_min.png');
+	background-repeat : no-repeat;
+	background-position : bottom left;
+}
+
+.dijitToggleButtonChecked  .hideTimerPaneIconImage{
+	background-image : url('/pe/images/buttons/timer_restore.png');
+	background-repeat : no-repeat;
+	background-position : bottom left;
+}
+
+.topbanner {
+     z-index: 10; 
+     position: absolute; 
+     left: 0px; 
+     width: 150px; 
+     top: 0px;  
+     height: 51px; 
+		background: url(/pe/images/buttons/topcorner.png) left top;
+		background-repeat: no-repeat;
+}
+
+#dojobody {
+	background-color: #FFCC99;		
+}
+
+.prxRoundedRectRegion {
+			color: #444;
+			position: absolute;
+			overflow: hidden;
+}
+	
+#roundedRectStatus	.prxRoundedRectTitlePane {
+	border-bottom: 1px solid black;
+}
+	
+.prxRoundedRectTitlePane {
+	width: 80%;
+	text-align: center;
+	font-weight: bold;
+	font-size: 18px;
+}
+
+.prxRoundedRectTitlePane td {
+	font-family: sans-serif;
+	font-size: 12px;	
+}
+
+.prxRoundedRectTitlePane tr {
+	height: 16px;
+}
+
+.prxRoundRectTitleNode {
+	background: #cccccc;
+	background:#fafafa repeat-x bottom left;
+	border:1px solid #bfbfbf;
+	padding:2px 1px 1px 2px;
+	cursor: pointer;
+	white-space: nowrap;
+}
+	
+.prxRoundedRectContainer {
+	width: 80%;
+	text-align: center;
+	font-weight: bold;
+	font-size: 12px;
+	padding: 4px;
+}
+	
+#roundedRectStatus	.prxRoundedRectContainer {
+	overflow-y: auto;
+}
+
+.prxRoundRectCollapseMode .prxRoundedRectExpandIcon {
+	background:url('/pe/images/buttons/arrowUp.gif') no-repeat center center;
+	width:16px; height:16px;
+	overflow:hidden; 
+	float:left;
+	display: inline;
+}
+	
+.prxRoundRectExpandMode .prxRoundedRectExpandIcon {
+	display: none;
+}
+	
+.prxRoundRectExpandMode .prxRoundedRectCollapseIcon {
+	background:url('/pe/images/buttons/arrowDown.gif') no-repeat center center; 
+	width:16px;
+	height:16px; 
+	overflow:hidden;
+	float:left; 
+	display: inline;
+}
+
+.prxRoundRectCollapseMode .prxRoundedRectCollapseIcon {
+	display: none;
+}
+
+.prxNextPrevButton {
+	height: 32px;
+	width: 26px;
+	position: absolute;
+	display: none;
+	}
+	
+		

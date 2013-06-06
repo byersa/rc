@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This Work is in the public domain and is provided on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied,
+including, without limitation, any warranties or conditions of TITLE,
+NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE.
+You are solely responsible for determining the appropriateness of using
+this Work and assume any risks associated with your use of this Work.
+
+This Work includes contributions authored by David E. Jones, not as a
+"work for hire", who hereby disclaims any copyright to the same.
+-->
+<entities xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/entity-definition-1.2.xsd">
+
+<entity entity-name="MAPViolationHistory" package-name="rcherbals"  sequence-primary-use-uuid="false">
+<description>MAP reporting history</description>
+<field name="mapViolationHistoryId" type="id" is-pk="true"><description>manufacturer</description></field>
+<field name="manufacturer" type="id"><description>manufacturer</description></field>
+<field name="mpn" type="text-short"><description>mpn</description></field>
+<field name="scanDate" type="date-time"><description>scanDate</description></field>
+<field name="map" type="text-short"><description>map</description></field>
+<field name="site" type="text-long"><description>site</description></field>
+<field name="reseller" type="text-medium"><description>reseller</description></field>
+<field name="competitorURL" type="text-long"><description>competitorURL</description></field>
+<field name="displayPrice" type="currency-amount"><description>displayPrice</description></field>
+<field name="inCartPrice" type="currency-amount"><description>inCartPrice</description></field>
+<field name="beforeCartViolation" type="text-short"><description>beforeCartViolation</description></field>
+<field name="afterCartViolation" type="text-short"><description>afterCartViolation</description></field>
+<field name="listingPageImage" type="text-long"><description>listingPageImage</description></field>
+<field name="email" type="text-medium"><description>email</description></field>
+<field name="detailPageImage" type="text-long"><description>detailPageImage</description></field>
+<field name="cartPageImage" type="text-long"><description>cartPageImage</description></field>
+</entity>
+
+    <!--view-entity entity-name="PartyOrgView" package-name="rcherbals">
+        <member-entity entity-alias="PARTY2" entity-name="mantle.party.party.Party"/>
+        <member-entity entity-alias="ORG2" entity-name="mantle.party.party.Organization" join-from-alias="PARTY2">
+            <key-map field-name="partyId" related-field-name="partyId"/>
+        </member-entity>        
+        <alias-all entity-alias="PARTY2"/>
+        <alias-all entity-alias="ORG2"/>
+    </view-entity-->
+    
+</entities>

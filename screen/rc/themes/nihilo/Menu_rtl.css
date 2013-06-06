@@ -1,0 +1,15 @@
+
+/* Menu */
+
+.dijitRtl .dijitMenuItem .dijitMenuItemIcon {
+	padding-left: 3px;
+	padding-right: 0px;
+}
+
+.dijitRtl .dijitMenuItem .dijitMenuExpandEnabled {
+	background:url('images/spriteRoundedIconsSmall.png') no-repeat left top;
+}
+
+.dj_ie6 .dijitRtl .dijitMenuItem .dijitMenuExpandEnabled {
+	background:url('images/spriteRoundedIconsSmall.png') no-repeat left top;
+}

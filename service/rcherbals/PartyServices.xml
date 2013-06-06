@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-1.2.xsd">
+	<service verb="getPartyList" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/party/getPartyList.groovy">
+	    <in-parameters>
+	        <parameter name="lastName" required="false"/>
+	        <parameter name="firstName" required="false"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="items" type="List" required="true"/>
+	    </out-parameters>
+	</service>
+	<service verb="queryParty" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/party/queryParty.groovy">
+	    <in-parameters>
+	        <parameter name="partyTypeEnumId" required="false"/>
+	        <parameter name="firstName" required="false"/>
+	        <parameter name="lastName" required="false"/>
+	        <parameter name="organizationName" required="false"/>
+	        <parameter name="emailAddress" required="false"/>
+	        <parameter name="phoneNumber" required="false"/>
+	        <parameter name="city" required="false"/>
+	        <parameter name="state" required="false"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="items" type="List" required="true"/>
+	    </out-parameters>
+	</service>
+</services>
