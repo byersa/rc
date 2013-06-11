@@ -34,6 +34,7 @@ class StorePartyTest extends Specification {
         ec = Moqui.getExecutionContext()
         logger.info("ec: ${ec}")
         logger.info("ec.entity: ${ec.entity}")
+        ec.user.loginUser("rcadmin", "moqui", null)
     }
 
     def cleanupSpec() {
@@ -96,5 +97,30 @@ class StorePartyTest extends Specification {
         where:
         _partyId | _partyTypeEnumId | _organizationName | _firstName | _lastName | _address1 | _city | _stateProvinceGeoId | _postalCode | _areaCode | _contactNumber | _emailAddress    | _postalContactMechId | _telecomContactMechId | _emailContactMechId 
         null     | "PERSON"         | null              | "Mary"       | "Doe"   | null      | null  | null                | null        | null      | null           | "mdoe@gmail.com" | null                 | null                  | null         
+    }
+    
+    def "create Person, phone, zip and email "() {
+        expect:
+            def createResultService = ec.service.sync().name("rcherbals.PartyServices.storeParty").parameters([
+                 partyId:_partyId, partyTypeEnumId:_partyTypeEnumId, 
+                 organizationName:_organizationName, 
+                 firstName:_firstName, lastName:_lastName,
+                 address1:_address1, city:_city, stateProvinceGeoId:_stateProvinceGeoId, postalCode: _postalCode,
+                 areaCode: _areaCode, contactNumber: _contactNumber,
+                 emailAddress: _emailAddress,
+                 postalContactMechId: _postalContactMechId, telecomContactMechId: _telecomContactMechId, emailContactMechId: _emailContactMechId
+                 ]).call()
+                 
+            logger.info("createResultService: ${createResultService}")
+            EntityValue person = ec.entity.makeFind("Person").condition("partyId", createResultService.partyId).one()
+            logger.info("person: ${person}")
+            person.lastName == _lastName
+            EntityValue contactMech = ec.entity.makeFind("ContactMech").condition("contactMechId", createResultService.emailContactMechId).one()
+            logger.info("contactMech: ${contactMech}")
+            contactMech.infoString == _emailAddress
+                 
+        where:
+        _partyId | _partyTypeEnumId | _organizationName | _firstName | _lastName | _address1 | _city | _stateProvinceGeoId | _postalCode | _areaCode | _contactNumber | _emailAddress    | _postalContactMechId | _telecomContactMechId | _emailContactMechId 
+        null     | "PERSON"         | null              | "Harry"       | "Doe"   | null      | null  | null                | "84057"    | null      | "8014005111" | "mdoe@gmail.com" | null                 | null                  | null         
     }
 }

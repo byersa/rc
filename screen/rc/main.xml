@@ -106,7 +106,7 @@
             <div  data-dojo-type="dijit/layout/TabContainer" id="work" region="center" >
                 <div data-dojo-type="rc/modules/TabModule" id="party" data-dojo-props="title: 'Party',storeUrl:'/party/getPartyList'">
                     <div data-dojo-type="rc/modules/DgridModule" 
-                          data-dojo-props="href:'/party/views/partyGridView.html', queryUrl: '/party/queryParty', title: 'List'"/>
+                          data-dojo-props="href:'/party/views/partyGridView.html', queryUrl: '/party/queryParty', createUrl: '/party/addNewParty', title: 'List'"></div>
                 </div>
                 <div  data-dojo-type="dijit/layout/TabContainer" id="product" data-dojo-props="title: 'Product'" >
                 </div>

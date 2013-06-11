@@ -17,16 +17,22 @@ import org.moqui.impl.entity.EntityValueImpl
 
 
     partyList.each {party ->
+        logger.info("getPartyList, party: ${party}")
         Map partyMap = ["partyId": party.partyId, "partyTypeEnumId": party.partyTypeEnumId]
         EntityValue person, org
         if (party.partyTypeEnumId == "PERSON") {
             person = ec.entity.makeFind("Person").condition(["partyId": party.partyId]).one()
-            partyMap["fullName"] = person.firstName + " " + person.lastName
+            if (person) {
+                partyMap["fullName"] = person.firstName + " " + person.lastName
+                partyListJson.push(partyMap)
+            } 
         } else {
             org = ec.entity.makeFind("Organization").condition(["partyId": party.partyId]).one()
-            partyMap["fullName"] = org.organizationName
+            if (org) {
+                partyMap["fullName"] = org.organizationName
+                partyListJson.push(partyMap)
+            }
         }
-        partyListJson.push(partyMap)
     }
     logger.info("partyListJson: ${partyListJson}")
     Map <String, Object> result = new HashMap()

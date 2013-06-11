@@ -21,7 +21,8 @@ define([
     'dijit/form/Button',
     'dijit/form/Form',
     'dijit/form/TextBox',
-    'dijit/form/FilteringSelect'
+    'dijit/form/FilteringSelect',
+    'dijit/Dialog'
 ], function(declare, string, query, registry, lang, on, request, Observable, GridFromHtml, OnDemandList, Selection, Keyboard, selector, htmlUtil, ContentPane, DetailModule, BasicStore) {
    
    var comboGrid = declare([GridFromHtml, OnDemandList, Selection, Keyboard]);
@@ -34,6 +35,8 @@ define([
         grid: null,
         queryForm: null,
         queryUrl: '',
+        createUrl: '',
+        scriptHasHooks: true,
         
         constructor: function(params) {
             return;
@@ -59,7 +62,7 @@ define([
                 newCont = string.substitute(cont, this);
             }
             ContentPane.prototype._setContent.call(this, newCont, isFakeContent);
-            
+            /*
             var scriptNode = query("script", this.domNode)[0];
             console.log("scriptNode: " + scriptNode);
             if (scriptNode) {
@@ -72,6 +75,7 @@ define([
                 console.log("txt: " + txt);
                 htmlUtil.evalInGlobal(txt, this.domNode);
             }
+            */
             var gridNode = query("table", this.domNode)[0];
             if (gridNode) {
                 console.log("gridNode: " + gridNode);
@@ -83,15 +87,34 @@ define([
                 this.grid.subRows[0].unshift(selectorColumn);
                 this.grid.set("subRows", this.grid.subRows);
                 var _this = this;
-                this.grid.on(".dgrid-cell:click", this.handleActions);  
                 this.grid.startup();
+                var dblClickHndl = this.grid.on(".dgrid-row:dblclick", this.handleDblClick);  
+                console.log("dblClickHndl: " + dblClickHndl);
             }
             var formNode = query("form", this.domNode)[0];
             if (formNode) {
-                console.log("formNode: " + gridNode);
+                console.log("formNode: " + formNode);
                 this.queryForm = registry.getEnclosingWidget(formNode);
                 console.log("this.queryForm: " + this.queryForm);
                 on(this.queryForm, "submit", this.submitQuery);
+            }
+            var dialogNode = query("#createDialog")[0];
+            if (dialogNode) {
+                console.log("dialogNode: " + dialogNode);
+                this.createDialog = registry.getEnclosingWidget(dialogNode);
+                console.log("this.createDialog: " + this.createDialog);
+                var formNode2 = query("form", dialogNode)[0];
+                if (formNode2) {
+                    var createForm = registry.getEnclosingWidget(formNode2);
+                    on(createForm, "submit", this.submitCreate);
+                }
+            }
+            var showDialogButton = query('input[name="showDialogButton"]', this.domNode)[0];
+            if (showDialogButton) {
+                console.log("showDialogButton: " + showDialogButton);
+                this.showDialogButton = registry.getEnclosingWidget(showDialogButton);
+                console.log("this.showDialogButton: " + this.showDialogButton);
+                on(this.showDialogButton, "click", this.showDialog);
             }
             return;
         },
@@ -112,6 +135,39 @@ define([
                     var newStore = new Observable(basicStore);
                     tabContainer.setStore(newStore);
                     thisGrid.setStore(newStore);
+                    return;
+                    }, function(err) {
+                        //console.log(err);
+                        return;
+                    });
+            return;
+        },
+        
+        showDialog: function() {
+            var dialog = registry.byId("createDialog");
+            dialog.opener = this;
+            dialog.show();
+            return;
+        },
+        
+        submitCreate: function(evt) {
+            var values = this.get("value");
+            var dgridContainer = this.getParent();
+            var thisGrid = dgridContainer.grid;
+            var queryDeferred = request.post(dgridContainer.createUrl, {
+                        handleAs: "json",
+                    data: values
+                }).then(function(result) {
+                    var row, list;
+                    if(dojo.isArray(result) ) {
+                        list = result;
+                    } else {
+                        list = result.items;
+                    }
+                    if (list.length) {
+                        thisGrid.put(list[0]);
+                    }
+                        
                     return;
                     }, function(err) {
                         //console.log(err);

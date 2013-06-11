@@ -8,25 +8,38 @@
 </head>
 <body>
         <script type="text/javascript">
-             function partyFullNameFormatter(item) {
-                 var returnString = item.firstName + " " + item.lastName;
-                 return returnString
-             }
-             function partyTypeFormatter(item) {
-                 var returnString = "";
-                 switch (item.partyType) {
-                     case "PERSON":
-                         returnString = "PERSON";
-                         break;
-                     case "ORGANIZATION":
-                         returnString = "ORGANIZATION";
-                         break;
-                     default:
-                         returnString = "UNKNOWN";
-                         break;
+        
+            require(["dojo/on", "dojo/query", "dojo/domReady"], function(on, query) {
+                 function partyFullNameFormatter(item) {
+                     var returnString = item.firstName + " " + item.lastName;
+                     return returnString
                  }
-                 return returnString
-             }
+                 function partyTypeFormatter(item) {
+                     var returnString = "";
+                     switch (item.partyType) {
+                         case "PERSON":
+                             returnString = "PERSON";
+                             break;
+                         case "ORGANIZATION":
+                             returnString = "ORGANIZATION";
+                             break;
+                         default:
+                             returnString = "UNKNOWN";
+                             break;
+                     }
+                     return returnString
+                 }
+                 
+                 function handleDblClickExt(evt) {
+                     console.log("in handleDblClickExt, evt: " + evt);
+                     return;
+                 }
+                // var form = dojo.query("form", _container_.domNode)[0];
+                //var dgrid = _container_.grid;
+                // on(dgrid, ".dgrid-row:dblclick", dojo.hitch(_container_, handleDblClickExt));
+                _container_.handleDblClick = dojo.hitch(_container_, handleDblClickExt);
+                return;
+             });
         </script>
         
         <div data-dojo-type="dijit/form/Form"
@@ -49,7 +62,8 @@
         
         <div data-dojo-type="dijit/Toolbar">
             <div data-dojo-type="dijit/form/CheckBox"></div>
-            <div data-dojo-type="dijit/form/Button" type="button">Query</div>
+            <div data-dojo-type="dijit/form/Button" name="queryButton" type="button">Query</div>
+            <div data-dojo-type="dijit/form/Button" name="showDialogButton" type="button">Create</div>
         </div>
 		<table id="partyGridView">
 			<thead>
@@ -63,6 +77,28 @@
 				</tr>
 			</thead>
 		</table>
+        
+        
+    <div data-dojo-type="dijit/Dialog" id="createDialog">
+        <div data-dojo-type="dijit/form/Form"
+             data-dojo-props="action: 'javascript:void(0)'">
+          <label for="partyTypeEnumId">Party Type</label>
+          <div name="partyTypeEnumId" data-dojo-type="dijit/form/FilteringSelect">
+            <option value="PARTY">Party</option>
+            <option value="ORGANIZATION">Organization</option>
+          </div>        
+          <label for="lastName">Last Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'lastName'"></div>
+          <label for="firstName">First Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'firstName'"></div>
+          <label for="organizationName">Organization Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'organizationName'"></div>
+          <label for="emailAddress">Email Address</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'emailAddress'"></div>
+            <div data-dojo-type="dijit/form/Button" type="submit">Submit</div>
+        </div>
+    </div>
+        
 
 </body>
 </html>
