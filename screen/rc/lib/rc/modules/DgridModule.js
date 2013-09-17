@@ -98,10 +98,11 @@ define([
                 console.log("this.queryForm: " + this.queryForm);
                 on(this.queryForm, "submit", this.submitQuery);
             }
-            var dialogNode = query("#createDialog")[0];
+            var dialogNode = query("[id=createDialog]")[0];
             if (dialogNode) {
                 console.log("dialogNode: " + dialogNode);
-                this.createDialog = registry.getEnclosingWidget(dialogNode);
+                //this.createDialog = registry.getEnclosingWidget(dialogNode);
+                this.createDialog = registry.byId("createDialog");
                 console.log("this.createDialog: " + this.createDialog);
                 var formNode2 = query("form", dialogNode)[0];
                 if (formNode2) {

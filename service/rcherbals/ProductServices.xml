@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-1.2.xsd">
+	<service verb="getProductList" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/product/getProductList.groovy">
+	    <in-parameters>
+	        <parameter name="productName" required="false"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="items" type="List" required="true"/>
+	    </out-parameters>
+	</service>
+	<service verb="queryProduct" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/product/queryProduct.groovy">
+	    <in-parameters>
+	        <parameter name="productTypeEnumId" required="false"/>
+	        <parameter name="productName" required="false"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="items" type="List" required="true"/>
+	    </out-parameters>
+	</service>
+
+    <service verb="storeProductAndCost" type="inline" authenticate="false">
+        <in-parameters>
+            <parameter name="productId" required="false"/>
+            <parameter name="productName" required="false"/>
+            <parameter name="productTypeEnumId" required="false" default-value="FINISHED_GOOD"/>
+            <parameter name="description" required="false"/>
+            <parameter name="cost" required="false"/>
+
+	        <parameter name="costUomId" required="false"/>
+            
+        </in-parameters>
+        <out-parameters>
+            <parameter name="productId" required="true"/>
+            <parameter name="costComponentId" required="true"/>
+        </out-parameters>
+
+        <actions>
+        
+            <if condition="!productId  && !productName">
+                <return error="true" message="Must provide either productName or productId."/>
+            </if>
+            <set field="result.productId" from="productId"/>
+                    <log level="info" message="storeProduct, context: ${context}"/>
+            <if condition="!productId">
+                <service-call name="create#Product" in-map="[productTypeEnumId:productTypeEnumId,  productName:productName]" out-map="newProductOut"/>
+                <check-errors>
+                <log level="info" message="CreateRegister(1b) errors: ${ec.getMessage().getErrorsString()}"/>
+                </check-errors>
+                <log level="info" message="CreateRegister(1a) newProductOut: ${newProductOut}"/>
+                <set field="result.productId" from="newProductOut.productId"/>
+                <if condition="cost">
+                    <service-call name="create#CostComponent" in-map="[productId:newProductOut.productId,  cost:cost,  costUomId:costUomId,  fromDate: ec.user.nowTimestamp]" 
+                              out-map="costComponentOut"/>
+                </service-call>
+                <check-errors>
+            </if>
+            
+            <if condition="productId">
+                    <entity-find-one entity-name="Product" value-field="origProduct"/>
+                    </check-errors>
+                    <script>newProduct = origProduct.cloneValue()</script>
+                    <entity-set value-field="newProduct" include="nonpk"/>
+                    <if condition="newProduct != origProduct">
+                        <service-call name="update#Product" in-map="newProduct"/>
+                    </if>
+
+                    <entity-find-one entity-name="CostComponent" list="origCostComponentList">
+                        <date-filter/>
+                    </entity-find-one>
+                    </check-errors>
+                    <if condition="origCostComponentList">
+                        <then>
+                            <set field="origCostComponent" from="origCostComponentList[0]"/>
+                            <if condition="cost  && origCostComponent.cost  != cost">
+                                <then>
+                                    <set field="origCostComponent.thruDate" from="ec.user.nowTimestamp"/>
+                                    <service-call name="update#CostComponent" in-map="origCostComponent"/>
+                                    </check-errors>
+                                    <script>newCostComponent = origCostComponentList[0].cloneValue()</script>
+                                    <entity-set value-field="newCostComponent" include="nonpk"/>
+                                    <service-call name="create#CostComponent" in-map="newCostComponent" out-map="costComponentOut"/>
+                                    </check-errors>
+                                </then>
+                             </then>
+                        </then>
+                        <else>
+                            <service-call name="create#CostComponent"  in-map="[productId:productId,  cost:cost,  costUomId:costUomId]" 
+                                          out-map="costComponentOut"/>
+                        </else>
+                    </if>
+            </if>
+            <set field="result.costComponentId" from="costComponentOut.costComponentId"/>
+            
+        </actions>
+    </service>
+</services>

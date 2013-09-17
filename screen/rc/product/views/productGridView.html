@@ -1,0 +1,84 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>
+		Product Grid View
+	</title>
+</head>
+<body>
+        <script type="text/javascript">
+        
+            require(["dojo/on", "dojo/query", "dojo/domReady"], function(on, query) {
+                 
+                 function handleDblClickExt(evt) {
+                     console.log("in handleDblClickExt, evt: " + evt);
+                     return;
+                 }
+                // var form = dojo.query("form", _container_.domNode)[0];
+                //var dgrid = _container_.grid;
+                // on(dgrid, ".dgrid-row:dblclick", dojo.hitch(_container_, handleDblClickExt));
+                _container_.handleDblClick = dojo.hitch(_container_, handleDblClickExt);
+                return;
+             });
+        </script>
+        
+        <div data-dojo-type="dijit/form/Form"
+             data-dojo-props="action: 'javascript:void(0)'">
+          <label for="productTypeEnumId">Product Type</label>
+          <div name="productTypeEnumId" data-dojo-type="dijit/form/FilteringSelect">
+            <option value="PARTY">Product</option>
+            <option value="ORGANIZATION">Organization</option>
+          </div>        
+          <label for="productName">Product Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'productName'"></div>
+          <label for="description">Description</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'description'"></div>
+          <label for="cost">Organization Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'organizationName'"></div>
+          <label for="costUomId">Units</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'costUomId'"></div>
+            <div data-dojo-type="dijit/form/Button" type="submit">Submit</div>
+        </div>
+        
+        <div data-dojo-type="dijit/Toolbar">
+            <div data-dojo-type="dijit/form/CheckBox"></div>
+            <div data-dojo-type="dijit/form/Button" name="queryButton" type="button">Query</div>
+            <div data-dojo-type="dijit/form/Button" name="showDialogButton" type="button">Create</div>
+        </div>
+		<table id="productGridView">
+			<thead>
+				<tr>
+					<th data-dgrid-column="{field:'productName'}">Name</th>
+					<th data-dgrid-column="{field:'productTypeEnumId'}">Product Type</th>
+					<th data-dgrid-column="{field:'description'}">Description</th>
+					<th data-dgrid-column="{field:'cost'}">Cost</th>
+					<th data-dgrid-column="{field:'costUomId'}">Units</th>
+				</tr>
+			</thead>
+		</table>
+        
+        
+    <div data-dojo-type="dijit/Dialog" id="createDialog">
+        <div data-dojo-type="dijit/form/Form"
+             data-dojo-props="action: 'javascript:void(0)'">
+          <label for="productTypeEnumId">Product Type</label>
+          <div name="productTypeEnumId" data-dojo-type="dijit/form/FilteringSelect">
+            <option value="PHYSICAL_GOOD">Physical Good</option>
+            <option value="RAW_MATERIAL">Raw Material</option>
+          </div>        
+          <label for="productName">Product Name</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'productName'"></div>
+          <label for="description">Description</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'description'"></div>
+          <label for="cost">Price</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'organizationName'"></div>
+          <label for="costUomId">Units</label>
+          <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'costUomId'"></div>
+            <div data-dojo-type="dijit/form/Button" type="submit">Submit</div>
+        </div>
+    </div>
+        
+
+</body>
+</html>

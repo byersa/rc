@@ -5,7 +5,9 @@
         default-menu-include="false" require-authentication="false">
     <subscreens>                            
         <subscreens-item name="party" location="component://rc/screen/rc/party.xml"/>
+        <subscreens-item name="product" location="component://rc/screen/rc/product.xml"/>
         <subscreens-item name="dojo" location="component://dojo/screen/DojoApp.xml"/>
+        <subscreens-item name="tools" location="component://rc/screen/tools/Tools.xml"/>
     </subscreens>
  
     <widgets>
@@ -108,7 +110,9 @@
                     <div data-dojo-type="rc/modules/DgridModule" 
                           data-dojo-props="href:'/party/views/partyGridView.html', queryUrl: '/party/queryParty', createUrl: '/party/addNewParty', title: 'List'"></div>
                 </div>
-                <div  data-dojo-type="dijit/layout/TabContainer" id="product" data-dojo-props="title: 'Product'" >
+                <div data-dojo-type="rc/modules/TabModule" id="product" data-dojo-props="title: 'Product',storeUrl:'/product/getProductList'">
+                    <div data-dojo-type="rc/modules/DgridModule" 
+                          data-dojo-props="href:'/product/views/productGridView.html', queryUrl: '/product/queryProduct', createUrl: '/product/addNewProduct', title: 'List'"></div>
                 </div>
                 <div  data-dojo-type="dijit/layout/TabContainer" id="map" data-dojo-props="title: 'MAP'" >
                 </div>

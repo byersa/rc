@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.1.xsd"
+        standalone="true"
+        default-menu-include="false" require-authentication="false">
+
+    <transition name="addNewProduct">
+      <actions>
+        <service-call name="rc.ProductServices.storeProduct" in-map="ec.web.parameters"
+                      out-map="spOut" web-send-json-response="false">
+        </service-call>
+        <service-call name="rc.ProductServices.getProduct" in-map="spOut.productId"
+                      web-send-json-response="true">
+        </service-call>
+      </actions>
+      <default-response type="none"/>
+    </transition>
+    <transition name="getProductList">
+        <service-call name="rcherbals.ProductServices.getProductList" in-map="ec.web.parameters"
+                      web-send-json-response="true">
+        </service-call>
+        <default-response type="none"/>
+    </transition>
+    <transition name="queryProduct">
+        <service-call name="rcherbals.ProductServices.queryProduct" in-map="ec.web.parameters"
+                      web-send-json-response="true">
+        </service-call>
+        <default-response type="none"/>
+    </transition>
+    <widgets>
+
+    </widgets>
+</screen>

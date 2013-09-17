@@ -197,4 +197,107 @@
             </check-errors>
         </actions>
     </service>
+    
+    <service verb="getPartyAndContacts" type="inline" authenticate="false">
+        <in-parameters>
+            <parameter name="partyId" required="true"/>
+        </in-parameters>
+        <out-parameters>
+            <parameter name="firstName" required="false"/>
+            <parameter name="middleName"/>
+            <parameter name="lastName" required="false"/>
+
+	        <parameter name="organizationName" required="false"/>
+            
+            <parameter name="newPassword" required="false"/>
+            <parameter name="newPasswordVerify" required="false"/>
+
+            <parameter name="currencyUomId"/>
+            <parameter name="locale"/>
+            <parameter name="parentPartyId"/>
+            
+            <parameter name="primaryRoleTypeId" />
+            <parameter name="partyTypeEnumId" />
+            <parameter name="statusId" />
+            
+            <parameter name="postalContactMechId" type="String" required="false"/>
+            <parameter name="countryGeoId" type="String" required="false"/>
+            <parameter name="address1" type="String" required="false"/>
+            <parameter name="address2" type="String" required="false"/>
+            <parameter name="city" type="String" required="false"/>
+            <parameter name="stateProvinceGeoId" type="String" required="false"/>
+            <parameter name="postalCode" type="String" required="false"><text-digits/></parameter>
+
+            <parameter name="telecomContactMechId" type="String" required="false"/>
+            <parameter name="areaCode" type="String" required="false"><text-digits/></parameter>
+            <parameter name="contactNumber" type="String" required="false"><text-digits/></parameter>
+
+            <parameter name="emailContactMechId" type="String" required="false"/>
+            <parameter name="emailAddress" required="false"></parameter>
+            <parameter name="postalContactMechPurposeId" required="false" default-value="PRIMARY_LOCATION"/>
+            <parameter name="telecomContactMechPurposeId" required="false" default-value="PRIMARY_PHONE"/>
+            <parameter name="emailContactMechPurposeId" required="false" default-value="PRIMARY_EMAIL"/>
+            <parameter name="partyId" required="true"/>
+            <parameter name="postalContactMechId" required="false"/>
+            <parameter name="telecomContactMechId" required="false"/>
+            <parameter name="emailContactMechId" required="false"/>
+        </out-parameters>
+
+        <actions>
+            <entity-find-one entity-name="Party" value-field="returnParty"/>
+            <set field="partyTypeEnumId" from="returnParty.partyTypeEnumId"/>
+            </check-errors>
+            <if condition="returnParty.partyTypeEnumId == 'PERSON'">
+                <entity-find-one entity-name="Person" value-field="origPerson"/>
+                </check-errors>
+                <set field="firstName" from="origPerson.firstName"/>
+                <set field="middleName" from="origPerson.middleName"/>
+                <set field="lastName" from="origPerson.lastName"/>
+            </if>
+            <if condition="partyTypeEnumId == 'ORGANIZATION'">
+                <entity-find-one entity-name="Organization" value-field="origOrganization"/>
+                </check-errors>
+                <set field="organizationName" from="origOrganization.organizationName"/>
+            </if>
+            
+            <entity-find entity-name="PartyContactMechPostalAddress" value-field="PCMPAList">
+                <field-map field="partyId" from="partyId"/>
+                <date-filter/>
+            </entity-find>
+            <if condition="PCMPAList">
+                <set field="PCMPA" from="PCMPAList[0]"/>
+                <set field="postalContactMechId" from="PCMPA.postalContactMechId"/>
+                <set field="countryGeoId" from="PCMPA.countryGeoId"/>
+                <set field="address1" from="PCMPA.address1"/>
+                <set field="address2" from="PCMPA.address2"/>
+                <set field="city" from="PCMPA.city"/>
+                <set field="stateProvinceGeoId" from="PCMPA.stateProvinceGeoId"/>
+                <set field="postalCode" from="PCMPA.postalCode"/>
+            </if>
+            
+            <entity-find entity-name="PartyContactMechTelecomNumber" value-field="PCMTNList">
+                <field-map field="partyId" from="partyId"/>
+                <date-filter/>
+            </entity-find>
+            <if condition="PCMTNList">
+                <set field="PCMTN" from="PCMTNList[0]"/>
+                <set field="telecomContactMechId" from="PCMTN.telecomContactMechId"/>
+                <set field="telecomContactMechPurposeId" from="PCMTN.contactMechPurposeId"/>
+                <set field="areaCode" from="PCMTN.areaCode"/>
+                <set field="contactNumber" from="PCMTN.contactNumber"/>
+            </if>
+            
+            <entity-find entity-name="ContactMech" value-field="PCMTNList">
+                <field-map field="partyId" from="partyId"/>
+                <field-map field="contactMechTypeEnumId" value="CmtEmailAddress"/>
+                <date-filter/>
+            </entity-find>
+            <if condition="PCMList">
+                <set field="PCM" from="PCMList[0]"/>
+                <set field="emailContactMechId" from="PCM.contactMechId"/>
+                <set field="emailContactMechPurposeId" from="PCMTN.contactMechPurposeId"/>
+                <set field="emailAddress" from="PCM.infoString"/>
+            </if>
+        </actions>
+    </service>
 </services>

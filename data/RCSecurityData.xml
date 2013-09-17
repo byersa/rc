@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-facade-xml type="seed">
+
+    <moqui.security.ArtifactGroup artifactGroupId="RCHERBALS_APP" description="RidgeCrest Herbals admin app"/>
+    
+    <moqui.security.UserGroup userGroupId="RCHERBALS_ADMIN" description="RidgeCrest Herbals Admin"/>
+    
+    <moqui.security.ArtifactAuthz artifactAuthzId="RCHERBALS_AUTHZ_OWN" userGroupId="RCHERBALS_ADMIN"
+            artifactGroupId="RCHERBALS_APP" authzTypeEnumId="AUTHZT_ALWAYS" authzActionEnumId="AUTHZA_ALL"/>
+
+    <moqui.security.ArtifactGroupMember artifactGroupId="RCHERBALS_APP" artifactName="component://rc/screen/rc/main.xml"
+            artifactTypeEnumId="AT_XML_SCREEN" inheritAuthz="Y"/>
+
+    <moqui.security.ArtifactGroupMember artifactGroupId="RCHERBALS_APP" artifactName="component://rc/screen/rc/party.xml"
+            artifactTypeEnumId="AT_XML_SCREEN" inheritAuthz="Y"/>
+
+    <moqui.security.UserAccount userId="RC_ADMIN" username="rcadmin" userFullName="RC ADMIN"
+            currentPassword="16ac58bbfa332c1c55bd98b53e60720bfa90d394" passwordHashType="SHA"
+            passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_us" timeZone="US/Mountain"
+            emailAddress="byersa@automationgroups.com"/>
+    <moqui.security.UserGroupMember userGroupId="RCHERBALS_ADMIN" userId="RC_ADMIN" fromDate="2013-06-10 00:00:00.000"/>
+    <moqui.security.UserPermission userPermissionId="RCAdmin" description="RC Admin Permission"/>
+    <moqui.security.UserGroupPermission userGroupId="ADMIN" userPermissionId="RCAdmin"
+            fromDate="2013-06-10 00:00:00.000" thruDate=""/>
+
+</entity-facade-xml>
+
