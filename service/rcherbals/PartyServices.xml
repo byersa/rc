@@ -246,17 +246,17 @@
         <actions>
             <entity-find-one entity-name="Party" value-field="returnParty"/>
             <set field="partyTypeEnumId" from="returnParty.partyTypeEnumId"/>
-            </check-errors>
+            <check-errors/>
             <if condition="returnParty.partyTypeEnumId == 'PERSON'">
                 <entity-find-one entity-name="Person" value-field="origPerson"/>
-                </check-errors>
+                <check-errors/>
                 <set field="firstName" from="origPerson.firstName"/>
                 <set field="middleName" from="origPerson.middleName"/>
                 <set field="lastName" from="origPerson.lastName"/>
             </if>
             <if condition="partyTypeEnumId == 'ORGANIZATION'">
                 <entity-find-one entity-name="Organization" value-field="origOrganization"/>
-                </check-errors>
+                <check-errors/>
                 <set field="organizationName" from="origOrganization.organizationName"/>
             </if>
             
