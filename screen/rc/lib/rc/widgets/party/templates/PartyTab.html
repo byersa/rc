@@ -1,0 +1,90 @@
+<div>
+
+        <div data-dojo-type="dijit.layout.ContentPane" class="dgridmod-header" region="top" 
+              style="height:20px;"
+        >
+            <div data-dojo-type="dijit/form/Form" class="dgridmod-query"
+                 data-dojo-attach-point="queryForm"
+                 data-dojo-props="action: 'javascript:void(0)'">
+              <label for="partyTypeEnumId">Party Type</label>
+              <div name="partyTypeEnumId" data-dojo-type="dijit/form/FilteringSelect">
+                <option value="PARTY">Party</option>
+                <option value="ORGANIZATION">Organization</option>
+              </div>        
+              <label for="lastName">Last Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'lastName'"></div>
+              <label for="firstName">First Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'firstName'"></div>
+              <label for="organizationName">Organization Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'organizationName'"></div>
+              <label for="emailAddress">Email Address</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'emailAddress'"></div>
+                <div data-dojo-type="dijit/form/Button" type="submit">Submit</div>
+            </div>
+        </div>
+        <div data-dojo-type="dijit.layout.ContentPane" class="dgridmod-footer" region="bottom" 
+              style="height:300px;"
+        >
+            <div data-dojo-attach-point="postalNode"></div>
+        <!--
+            <div data-dojo-type="dijit/form/Form" class="dgridmod-edit"
+                 data-dojo-attach-point="editForm"
+                 data-dojo-props="action: 'javascript:void(0)'">
+              <label for="partyTypeEnumId">Party Type</label>
+              <div name="partyTypeEnumId" data-dojo-type="dijit/form/FilteringSelect">
+                <option value="PARTY">Party</option>
+                <option value="ORGANIZATION">Organization</option>
+              </div>        
+              <label for="lastName">Last Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'lastName'"></div>
+              <label for="firstName">First Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'firstName'"></div>
+              <label for="organizationName">Organization Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'organizationName'"></div>
+              <label for="emailAddress">Email Address</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'emailAddress'"></div>
+                <div data-dojo-type="dijit/form/Button" type="submit">Submit</div>
+            </div>
+            <div data-dojo-type="dijit/form/Form" class="dgridmod-create"
+                 data-dojo-attach-point="createForm"
+                 data-dojo-props="action: 'javascript:void(0)'">
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>
+                                <div data-dojo-type="dijit/form/RadioButton" name="partyTypeEnumId" 
+                                    checked value="ORGANIZATION"></div>
+                            </th>
+                        </tr>
+                        <tr>
+                        </tr>
+                        <tr>
+                        </tr>
+                    </tbody>
+                </table>
+              <label for="partyTypeEnumId">Party Type</label>
+              <div name="partyTypeEnumId" data-dojo-type="dijit/form/FilteringSelect">
+                <option value="PARTY">Party</option>
+                <option value="ORGANIZATION">Organization</option>
+              </div>        
+              <label for="lastName">Last Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'lastName'"></div>
+              <label for="firstName">First Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'firstName'"></div>
+              <label for="organizationName">Organization Name</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'organizationName'"></div>
+              <label for="emailAddress">Email Address</label>
+              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'emailAddress'"></div>
+                <div data-dojo-type="dijit/form/Button" type="submit">Submit</div>
+            </div>
+-->        
+        </div>
+        <div data-dojo-type="dijit.layout.ContentPane" class="dgridmod-center" region="center" >
+            <div data-dojo-type="dijit/Toolbar" class="dgridmod-toolbar" >
+                <div data-dojo-type="dijit/form/CheckBox"></div>
+                <div data-dojo-type="dijit/form/Button" name="queryButton" type="button">Query</div>
+                <div data-dojo-type="dijit/form/Button" name="showDialogButton" type="button">Create</div>
+            </div>
+            <div data-dojo-attach-point="gridNode"></div>
+        </div>
+</div>        

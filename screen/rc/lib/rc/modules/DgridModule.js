@@ -6,6 +6,8 @@ define([
 	    "dojo/_base/lang",
         'dojo/on',
         'dojo/request',
+        'dojo/html',
+        'dojo/dom',
         'dojo/store/Observable',
         'dgrid/GridFromHtml',
         'dgrid/OnDemandList',
@@ -22,11 +24,12 @@ define([
     'dijit/form/Form',
     'dijit/form/TextBox',
     'dijit/form/FilteringSelect',
-    'dijit/Dialog'
-], function(declare, string, query, registry, lang, on, request, Observable, GridFromHtml, OnDemandList, Selection, Keyboard, selector, htmlUtil, ContentPane, DetailModule, BasicStore) {
+    'dijit/Dialog',
+    'rc/modules/util/agutils'
+], function(declare, string, query, registry, lang, on, request, html, dom, Observable, GridFromHtml, OnDemandList, Selection, Keyboard, selector, htmlUtil, ContentPane, DetailModule, BasicStore, agutils) {
    
    var comboGrid = declare([GridFromHtml, OnDemandList, Selection, Keyboard]);
-
+   
    var container = declare('rc.modules.DgridModule', [ContentPane], {
         
         storeId: '',
@@ -37,6 +40,7 @@ define([
         queryUrl: '',
         createUrl: '',
         scriptHasHooks: true,
+        origEdit: '',
         
         constructor: function(params) {
             return;
@@ -76,6 +80,7 @@ define([
                 htmlUtil.evalInGlobal(txt, this.domNode);
             }
             */
+            /*
             var gridNode = query("table", this.domNode)[0];
             if (gridNode) {
                 console.log("gridNode: " + gridNode);
@@ -88,35 +93,46 @@ define([
                 this.grid.set("subRows", this.grid.subRows);
                 var _this = this;
                 this.grid.startup();
-                var dblClickHndl = this.grid.on(".dgrid-row:dblclick", this.handleDblClick);  
+                var dblClickHndl = this.grid.on(".dgrid-row:dblclick", lang.hitch(this, "handleDblClick"));  
                 console.log("dblClickHndl: " + dblClickHndl);
             }
-            var formNode = query("form", this.domNode)[0];
-            if (formNode) {
-                console.log("formNode: " + formNode);
-                this.queryForm = registry.getEnclosingWidget(formNode);
-                console.log("this.queryForm: " + this.queryForm);
+            */
+            // var formNode = query("form", this.domNode)[0];
+            // if (formNode) {
+            //     console.log("formNode: " + formNode);
+            //     this.queryForm = registry.getEnclosingWidget(formNode);
+            //     console.log("this.queryForm: " + this.queryForm);
+            //     on(this.queryForm, "submit", this.submitQuery);
+            // }
+            if (this.queryForm) {
                 on(this.queryForm, "submit", this.submitQuery);
             }
-            var dialogNode = query("[id=createDialog]")[0];
-            if (dialogNode) {
-                console.log("dialogNode: " + dialogNode);
-                //this.createDialog = registry.getEnclosingWidget(dialogNode);
-                this.createDialog = registry.byId("createDialog");
-                console.log("this.createDialog: " + this.createDialog);
-                var formNode2 = query("form", dialogNode)[0];
-                if (formNode2) {
-                    var createForm = registry.getEnclosingWidget(formNode2);
-                    on(createForm, "submit", this.submitCreate);
-                }
+            if (this.editForm) {
+                on(this.editForm, "submit", this.submitEdit);
             }
-            var showDialogButton = query('input[name="showDialogButton"]', this.domNode)[0];
-            if (showDialogButton) {
-                console.log("showDialogButton: " + showDialogButton);
-                this.showDialogButton = registry.getEnclosingWidget(showDialogButton);
-                console.log("this.showDialogButton: " + this.showDialogButton);
-                on(this.showDialogButton, "click", this.showDialog);
-            }
+            // var dialogNode = query("[id=createDialog]")[0];
+            // if (dialogNode) {
+            //     console.log("dialogNode: " + dialogNode);
+            //     //this.createDialog = registry.getEnclosingWidget(dialogNode);
+            //     this.createDialog = registry.byId("createDialog");
+            //     console.log("this.createDialog: " + this.createDialog);
+            //     var formNode2 = query("form", dialogNode)[0];
+            //     if (formNode2) {
+            //         var createForm = registry.getEnclosingWidget(formNode2);
+            //         on(createForm, "submit", this.submitCreate);
+            //     }
+            // }
+            // var showDialogButton = query('input[name="showDialogButton"]', this.domNode)[0];
+            // if (showDialogButton) {
+            //     console.log("showDialogButton: " + showDialogButton);
+            //     this.showDialogButton = registry.getEnclosingWidget(showDialogButton);
+            //     console.log("this.showDialogButton: " + this.showDialogButton);
+            //     on(this.showDialogButton, "click", this.showDialog);
+            // }
+            return;
+        },
+        
+        submitEdit: function(evt) {
             return;
         },
         
@@ -187,8 +203,27 @@ define([
             return;
         },
         
-        handleActions: function(evt) {
-            var cell = grid.cell(evt);
+        handleDblClick: function(evt) {
+            var row = this.grid.row(evt);
+            if(this.origEdit) {
+                if (!agutils.isEqual(this.origEdit, row)) {
+                    this.handleDirty("Edit", function() {
+                            this.editForm.set("value", row);
+                            this.origEdit = this.editForm.set("value");
+                        });
+                }
+            } else {
+                this.editForm.set("value", row);
+                this.origEdit = this.editForm.set("value");
+            }
+            return;
+        },
+        
+        handleDirty: function(formName, callback) {
+            var validateDirtyDialog = registry.byId("validateDirtyDialog");
+            var textNode = query("#dirtyDialogText", validateDirtyDialog.domNode);
+            var txt = "The " + formName + " form data has been changed. Do you wish to save the changes?";
+            html.set(textNode, txt);
             return;
         }
     });

@@ -13,6 +13,7 @@ define([
         detailViewUrl: '',
         storeUrl: '',
         store: null,
+        idProperty: '',
         
         constructor: function(params) {
             return;
@@ -22,7 +23,8 @@ define([
             this.inherited(arguments);
             var basicStore = new BasicStore({
                 id: this.id + '-store',
-                target: this.storeUrl
+                target: this.storeUrl,
+                idProperty: this.idProperty
                 });
                 
             this.store = new Observable(basicStore);

@@ -27,14 +27,22 @@ return declare("rc.modules.BasicStore", Memory, {
     	headers.Accept = this.accepts;
         this.loadComplete = false;
         this.isLoading = true;
-        this.dataDeferred = xhr("POST", {
+        if (this.dataDeferred) {
+            this.dataDeferred = xhr("POST", {
                 url: this.target,
                 handleAs: "json",
                 headers: headers
             });
+        } else {
+            this.dataDeferred = [];
+        }
         var _this = this;
         Deferred.when(this.dataDeferred, function(results) {
-            _this.setData(results);
+            var data = results.items ? results.items : results;
+            _this.setData(data);
+            if (results.identifier && !_this.idProperty) {
+                _this.idProperty = results.identifier;
+            }
             _this.loadComplete = true;
             _this.isLoading = false;
         });
