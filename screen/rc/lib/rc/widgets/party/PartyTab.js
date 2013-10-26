@@ -14,6 +14,7 @@ define([
     'dijit/layout/BorderContainer',
     'dojo/text!./templates/PartyTab.html',
     'rc/modules/RWStore',
+    'rc/modules/BasicStore',
     'dojo/store/Observable',
         'dgrid/OnDemandGrid',
         'dgrid/Selection',
@@ -22,20 +23,21 @@ define([
         'dgrid/editor',
         'dojo/store/Memory',
     'dijit/form/ValidationTextBox',
+    'dijit/form/Select',
     'dojox/validate',
+    'dojox/validate/web',
     'dijit/Toolbar',
     'dijit/form/CheckBox',
     'dijit/form/Button',
     'dijit/form/Form',
     'dijit/form/TextBox',
-    'dijit/form/FilteringSelect',
     'dijit/layout/ContentPane',
     'dijit/form/RadioButton',
     'dijit/Dialog'
 ], function(declare, string, query, registry, lang, on, request, html, dom, htmlUtil, 
             _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
-            RWStore, Observable, OnDemandGrid, Selection, Keyboard, selector, editor,
-            Memory, ValidationTextBox, validate
+            BasicStore, RWStore, Observable, OnDemandGrid, Selection, Keyboard, selector, editor,
+            Memory, ValidationTextBox, Select, validate, webValidate
             ) {
                 
     var comboGrid = declare([OnDemandGrid, Selection, Keyboard]);
@@ -55,7 +57,7 @@ define([
         postCreate: function() {
             this.inherited(arguments);
             var _this = this;
-            var basicStore = new RWStore({
+            var basicStore = new BasicStore({
                 id: this.id + '-store',
                 target: this.storeUrl,
                 idProperty: this.idProperty
@@ -68,23 +70,51 @@ define([
             console.log("dblClickHndl: " + dblClickHndl);
 
             this.postalStore = new Observable(new RWStore({idProperty:'contactMechId'}));
-            this.postalGrid = new comboGrid({store: this.postalStore, subRows: this.getPostalColumns()}, this.postalNode);
-            this.postalGrid.on(".dgrid-cell:click", lang.hitch(this, "handleAddClick"));
-            this.postalGrid.on(".dgrid-cell:mouseover", lang.hitch(this, "handleAddMouseover"));
+            this.postalGrid = new comboGrid({store: this.postalStore, subRows: this.getPostalColumns()}, this.postalGridNode);
+            query("#postalGridAdd").on("click", lang.hitch(_this, "addPostalRow"));
+
+            this.phoneStore = new Observable(new RWStore({idProperty:'contactMechId'}));
+            this.phoneGrid = new comboGrid({store: this.phoneStore, columns: this.getPhoneColumns()}, this.phoneGridNode);
+            query("#phoneGridAdd").on("click", lang.hitch(_this, "addPhoneRow"));
+
+            this.emailStore = new Observable(new RWStore({idProperty:'contactMechId'}));
+            this.emailGrid = new comboGrid({store: this.emailStore, columns: this.getEmailColumns()}, this.emailGridNode);
+            query("#emailGridAdd").on("click", lang.hitch(_this, "addEmailRow"));
             return;
         },
         
-        handleAddClick: function(evt) {
-            var cell = this.postalGrid.cell(evt);
-            var row = this.postalGrid.row(evt);
+        startup: function() {
+            this.inherited(arguments);
+            this.grid.startup();
+            
+            this.postalGrid.startup();
+            this.addPostalRow();
+            
+            this.phoneGrid.startup();
+            this.addPhoneRow();
+            
+            this.emailGrid.startup();
+            this.addEmailRow();
+            
             return;
         },
         
-        handleAddMouseover: function(evt) {
-            evt.preventDefault();
-            var cell = this.postalGrid.cell(evt);
-            var row = this.postalGrid.row(evt);
-            return;
+        addPhoneRow: function(evt) {
+            this.phoneGrid.store.put({
+                fromDate: new Date().getTime()
+                });
+        },
+        
+        addPostalRow: function(evt) {
+            this.postalGrid.store.put({
+                fromDate: new Date().getTime()
+                });
+        },
+        
+        addEmailRow: function(evt) {
+            this.emailGrid.store.put({
+                fromDate: new Date().getTime()
+                });
         },
         
         getMainColumns: function() {
@@ -108,7 +138,17 @@ define([
 							{field:'address2', label:'Address 2', sortable: true},
 							{field:'stateProvidenceGeoId', label:'State', sortable: true},
 							editor({field:'postalCode', label:'Zip', sortable: true, 
-							        editorArgs:{validator: function(value) {
+							                canEdit: function(object, value) {
+							                    if (object.thruDate) {
+							                        return false;
+							                    } else {
+							                        return true;
+							                    }
+							                },
+							        editorArgs:
+							            {
+							                placeholder: '##### or #####-####',
+							                validator: function(value) {
 							                    return validate.isNumberFormat(value, {format: ['#####', '#####-####']});
 							                }
 							            }
@@ -118,29 +158,54 @@ define([
 					];
 			},
 			
-        startup: function() {
-            this.inherited(arguments);
-            this.grid.startup();
-            this.postalGrid.startup();
-            this.postalGrid.store.put({
-                address1:'809 Ellison Lane',
-                address2:'suite 2',
-                postalCode:'22980',
-                stateProvidenceGeoId:'VA',
-                city:'Waynesboro'
-                });
-            //registry.add(this.store);
-                /*
-            var dgridContainer = new DgridModule({
-                href: this.dgridViewUrl,
-                detailViewUrl: this.detailViewUrl,
-                store: this.store
-                });
-            this.addChild(dgridContainer, "before");
-            */
-            return;
-        },
-        
+        getPhoneColumns: function() {
+            return [
+							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true, 
+							        editorArgs:
+							            {
+							                options: [
+							                     { label: "Primary", value: "PhonePrimary" },
+							                     { label: "Fax", value: "PhoneFax" }
+							                     ]
+							            }
+							        }, 
+							        Select),
+							editor({field:'contactNumber', label:'Number', sortable: true, 
+							        editorArgs:
+							            {
+							                placeholder: '###-###-####',
+							                validator: function(value) {
+							                    return validate.isNumberFormat(value, {format: ['###-###-####']});
+							                }
+							            }
+							        }, 
+							        ValidationTextBox)
+					];
+			},
+			
+        getEmailColumns: function() {
+            return [
+							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true, 
+							        editorArgs:
+							            {
+							                options: [
+							                     { label: "Primary", value: "EmailPrimary" },
+							                     { label: "Support", value: "EmailSupport" }
+							                     ]
+							            }
+							        }, 
+							        Select),
+							editor({field:'infoString', label:'Email', sortable: true, 
+							        editorArgs:{
+							                placeholder: 'email address',
+							                validator: function(value) {
+							                    return webValidate.isEmailAddress(value);
+							                }
+							        }}, 
+							        ValidationTextBox)
+					];
+			},
+			
         getStore: function() {
             return this.store;
         },
@@ -187,12 +252,7 @@ define([
                  },
                  
         formatAddButton: function(data, object) {
-            var pk = this.grid.store.getPKIndex();
-            if (data == pk ) {
-                return "New";
-            } else {
-                return "Remove";
-            }
+            return "X";
         }
 
         
