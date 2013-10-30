@@ -5,14 +5,9 @@
         default-menu-include="false" require-authentication="false">
 
     <transition name="addNewParty">
-      <actions>
-        <service-call name="rc.PartyServices.storeParty" in-map="ec.web.parameters"
-                      out-map="spOut" web-send-json-response="false">
-        </service-call>
-        <service-call name="rc.PartyServices.getParty" in-map="spOut.partyId"
+        <service-call name="rcherbals.PartyServices.storeParty" in-map="ec.web.parameters"
                       web-send-json-response="true">
         </service-call>
-      </actions>
       <default-response type="none"/>
     </transition>
     <transition name="getPartyList">

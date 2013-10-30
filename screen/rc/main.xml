@@ -12,30 +12,8 @@
  
     <widgets>
      
-        <!--render-mode>
-            <text type="html"><![CDATA[
-                 <script type="text/javascript">
-                        require(
-                        [
-                            'dojo/ready',
-                                  'dojo/_base/lang',
-                                  'dgrid/selector',
-                                  'dijit/Dialog',
-                                  'dojo/dom-construct'
-                        ], function(ready, lang, Selector, Dialog, domConstruct) {
-                            lang.setObject("dgrid.Selector", Selector);
-                        });
-                </script>
-                <div data-dojo-type="dijit.layout.TabContainer" id="work" region="center">
-
-            ]]></text>
-        </render-mode-->
-        <!--render-mode>
-            <text type="html" location="component://rc/screen/rc/view/main.html"/>
-        </render-mode-->
         
-        <render-mode>
-            <text type="html"><![CDATA[
+<render-mode><text type="html"><![CDATA[
 <!DOCTYPE HTML>
 <html>
     <head>
@@ -59,15 +37,6 @@
     <!-- application main file -->
          <script type="text/javascript">
                 require({
-                     trace:{
-                        "loader-circular-dependency": 0,
-                        "loader-define": 0,
-                        "loader-define-module": 0,
-                        "loader-exec-module": 0,
-                        "loader-finish-exec": 0,
-                        "loader-inject": 0,
-                        "loader-run-factory": 0                      
-                      },                       
                       packages:[
                                 {
                                         location:'/lib/rc',
@@ -79,6 +48,7 @@
                     'dijit/layout/BorderContainer',
                     'dijit/layout/ContentPane',
                     'dojox/layout/ContentPane',
+                    'rc/widgets/party/PartyTab',
                     'rc/modules/TabModule'
                 ]);
         </script>
@@ -106,14 +76,14 @@
             <div data-dojo-type="dijit/layout/ContentPane" id="main-container-footer" data-dojo-props="region:'bottom'" >
             </div>
             <div  data-dojo-type="dijit/layout/TabContainer" id="work" region="center" >
-                <div data-dojo-type="rc/modules/TabModule" id="party" data-dojo-props="title: 'Party',storeUrl:'/party/getPartyList'">
-                    <div data-dojo-type="rc/modules/DgridModule" 
-                          data-dojo-props="href:'/party/views/partyGridView.html', queryUrl: '/party/queryParty', createUrl: '/party/addNewParty', title: 'List'"></div>
-                </div>
-                <div data-dojo-type="rc/modules/TabModule" id="product" data-dojo-props="title: 'Product',storeUrl:'/product/getProductList'">
+                <div data-dojo-type="rc/widgets/party/PartyTab" data-dojo-props="title: 'Party',storeUrl:'/party/getPartyList', idProperty: 'partyId' "></div>
+                <!--div data-dojo-type="rc/modules/TabModule" id="party" data-dojo-props="title: 'Party',storeUrl:'/party/getPartyList', idProperty: 'partyId' ">
+                    <div data-dojo-type="rc/widgets/party/PartyTab" data-dojo-props="title: 'List'"></div>
+                </div-->
+                <!--div data-dojo-type="rc/modules/TabModule" id="product" data-dojo-props="title: 'Product',storeUrl:'/product/getProductList'">
                     <div data-dojo-type="rc/modules/DgridModule" 
                           data-dojo-props="href:'/product/views/productGridView.html', queryUrl: '/product/queryProduct', createUrl: '/product/addNewProduct', title: 'List'"></div>
-                </div>
+                </div-->
                 <div  data-dojo-type="dijit/layout/TabContainer" id="map" data-dojo-props="title: 'MAP'" >
                 </div>
             </div>

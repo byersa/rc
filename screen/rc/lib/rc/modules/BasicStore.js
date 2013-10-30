@@ -27,7 +27,7 @@ return declare("rc.modules.BasicStore", Memory, {
     	headers.Accept = this.accepts;
         this.loadComplete = false;
         this.isLoading = true;
-        if (this.dataDeferred) {
+        if (this.target) {
             this.dataDeferred = xhr("POST", {
                 url: this.target,
                 handleAs: "json",

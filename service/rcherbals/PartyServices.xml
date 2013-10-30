@@ -8,6 +8,7 @@
 	    </in-parameters>
 	    <out-parameters>
 	        <parameter name="items" type="List" required="true"/>
+	        <parameter name="identifier" required="true" default-value="partyId"/>
 	    </out-parameters>
 	</service>
 	<service verb="queryParty" type="script" authenticate="false"
@@ -28,6 +29,94 @@
 	</service>
 
     <service verb="storeParty" type="inline" authenticate="false">
+        <in-parameters>
+            <parameter name="data" type="Map" required="false"/>
+        </in-parameters>
+	    <out-parameters>
+	        <parameter name="partyId" type="String" required="false"/>
+	    </out-parameters>
+        <actions>
+            <script><![CDATA[
+            import groovy.json.JsonSlurper
+
+            ec.artifactExecution.disableAuthz()            
+            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("addNewParty")
+            logger.info("in addNewParty 2, data: ${ec.web.parameters}")
+            def slurper = new JsonSlurper()
+            def data = slurper.parseText(ec.web.parameters.data)
+            //logger.info("result: ${result}")
+            ]]></script>
+            <log message="data  1:  ${data}"/>
+            <entity-make-value entity-name="mantle.party.Party" value-field="party"/>
+            <log message="party:  ${party}"/>
+            <entity-set value-field="party" include="nonpk" map="data"/>            
+            
+            <entity-sequenced-id-primary value-field="party"/>
+            <entity-create value-field="party"/>  
+            <log message="party  2:  ${party}"/>
+            <if condition="data.partyTypeEnumId=='PtyPerson'">
+                    <entity-make-value entity-name="Person" value-field="person"/>
+                    <entity-set value-field="person" include="nonpk" map="data"/>  
+                    <log message="person:  ${person}"/>
+                    <set field="person.partyId" from="party.partyId"/>
+                    <log message="person2:  ${person}"/>
+                    <entity-create value-field="person"/>  
+                    <log message="person3:  ${person}"/>
+                <else>
+                    <entity-make-value entity-name="Organization" value-field="organization"/>
+                    <entity-set value-field="organization" include="nonpk" map="data"/>  
+                    <log message="organization:  ${organization}"/>
+                    <set field="organization.partyId" from="party.partyId"/>
+                    <log message="organization2:  ${organization}"/>
+                    <entity-create value-field="organization"/>  
+                    <log message="organization3:  ${organization}"/>
+                </else>
+            </if>
+            <check-errors/>
+            
+            <iterate list="data.postalData" entry="postal">
+                <set field="postal.partyId" from="party.partyId"/>
+                <set field="postal.contactMechTypeEnumId" value="CmtPostalAddress"/>
+                <log message="postal  1:  ${postal},  party.partyId:  ${party.partyId}"/>
+            
+                <service-call name="mantle.party.ContactServices.create#PostalAddress" in-map="postal" out-map="postalOut">
+                    <!--field-map name="partyId" from="party.partyId"/-->
+                </service-call>
+                <log message="postalOut  1:  ${postalOut}"/>
+                <check-errors/>
+                <set field="postal.contactMechId" from="postalOut.contactMechId"/>
+                
+            </iterate>
+                <log message="data.postalData  1:  ${data.postalData}"/>
+            
+            <iterate list="data.emailData" entry="email">
+                <set field="email.partyId" from="party.partyId"/>
+                <set field="email.contactMechTypeEnumId" value="CmtEmailAddress"/>
+                <service-call name="mantle.party.ContactServices.createEmailAddress" in-map="email" out-map="emailOut">
+                </service-call>
+                <check-errors/>
+                <set field="email.contactMechId" from="emailOut.contactMechId"/>
+            </iterate>
+            <iterate list="data.phoneData" entry="phone">
+                <set field="phone.partyId" from="party.partyId"/>
+                <set field="phone.contactMechTypeEnumId" value="CmtTelecomNumber"/>
+                <service-call name="mantle.party.ContactServices.createTelecomNumber" in-map="email" out-map="phoneOut">
+                </service-call>
+                <check-errors/>
+                <set field="phone.contactMechId" from="phoneOut.contactMechId"/>
+            </iterate>
+            
+            <log message="result  2:  ${result}"/>
+            <script><![CDATA[
+            import groovy.json.JsonBuilder
+            def jsonBuilder = new JsonBuilder(data)
+            result.data = jsonBuilder.toString()
+            logger.info("in addNewParty 3, data: ${result.data}")
+            ]]></script>
+        </actions>
+    </service>
+    
+    <service verb="storeParty2" type="inline" authenticate="false">
         <in-parameters>
             <parameter name="firstName" required="false"/>
             <parameter name="middleName"/>
@@ -84,7 +173,7 @@
             </if>
             
             <if condition="partyId">
-                <if condition="partyTypeEnumId == 'PERSON'">
+                <if condition="partyTypeEnumId == 'PtyPerson'">
                     <entity-find-one entity-name="Person" value-field="origPerson"/>
                     <script>newPerson = origPerson.cloneValue()</script>
                     <entity-set value-field="newPerson" include="nonpk"/>
@@ -92,7 +181,7 @@
                         <service-call name="update#Person" in-map="newPerson"/>
                     </if>
                 </if>
-                <if condition="partyTypeEnumId == 'ORGANIZATION'">
+                <if condition="partyTypeEnumId == 'PtyOrganization'">
                     <entity-find-one entity-name="Organization" value-field="origOrganization"/>
                     <script>newOrganization = origOrganization.cloneValue()</script>
                     <entity-set value-field="newOrganization" include="nonpk"/>
@@ -103,12 +192,12 @@
             </if>
             
             <if condition="!partyId">
-                <if condition="partyTypeEnumId == 'PERSON'">
+                <if condition="partyTypeEnumId == 'PtyPerson'">
                     <service-call name="create#Person" in-map="context">
                         <field-map field-name="partyId" from="result.partyId"/>
                     </service-call>
                 </if>
-                <if condition="partyTypeEnumId == 'ORGANIZATION'">
+                <if condition="partyTypeEnumId == 'PtyOrganization'">
                     <service-call name="create#Organization" in-map="context">
                         <field-map field-name="partyId" from="result.partyId"/>
                     </service-call>
@@ -247,14 +336,14 @@
             <entity-find-one entity-name="Party" value-field="returnParty"/>
             <set field="partyTypeEnumId" from="returnParty.partyTypeEnumId"/>
             <check-errors/>
-            <if condition="returnParty.partyTypeEnumId == 'PERSON'">
+            <if condition="returnParty.partyTypeEnumId == 'PtyPerson'">
                 <entity-find-one entity-name="Person" value-field="origPerson"/>
                 <check-errors/>
                 <set field="firstName" from="origPerson.firstName"/>
                 <set field="middleName" from="origPerson.middleName"/>
                 <set field="lastName" from="origPerson.lastName"/>
             </if>
-            <if condition="partyTypeEnumId == 'ORGANIZATION'">
+            <if condition="partyTypeEnumId == 'PtyOrganization'">
                 <entity-find-one entity-name="Organization" value-field="origOrganization"/>
                 <check-errors/>
                 <set field="organizationName" from="origOrganization.organizationName"/>
