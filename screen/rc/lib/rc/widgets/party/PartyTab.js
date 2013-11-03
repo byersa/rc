@@ -13,6 +13,7 @@ define([
         'dojo/json',
         'dojo/_base/array',
         'dojo/request',
+        'dojo/dom-style',
         'dijit/_TemplatedMixin',
         'dijit/_WidgetsInTemplateMixin',
     'dijit/layout/BorderContainer',
@@ -26,9 +27,11 @@ define([
         'dgrid/selector',
         'dgrid/editor',
         'dojo/store/Memory',
+        'dojo/data/ObjectStore',
     'dijit/form/ValidationTextBox',
     'dijit/form/TextBox',
     'dijit/form/Select',
+    'dijit/form/FilteringSelect',
     'dojox/validate',
     'dojox/validate/web',
     'dijit/Toolbar',
@@ -39,9 +42,9 @@ define([
     'dijit/form/RadioButton',
     'dijit/Dialog'
 ], function(declare, string, query, registry, lang, on, request, html, dom, domAttr, htmlUtil, JSON, 
-            array, request, _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
+            array, request, domStyle, _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
             BasicStore, RWStore, Observable, OnDemandGrid, Selection, Keyboard, selector, editor,
-            Memory, ValidationTextBox, TextBox, Select, validate, webValidate
+            Memory, ObjectStore, ValidationTextBox, TextBox, Select, FilteringSelect, validate, webValidate
             ) {
                 
     var comboGrid = declare([OnDemandGrid, Selection, Keyboard]);
@@ -53,6 +56,7 @@ define([
         storeUrl: '',
         store: null,
         idProperty: '',
+        detailMode: 'create',
 						
         constructor: function() {
             return;
@@ -63,29 +67,36 @@ define([
             var _this = this;
             var basicStore = new BasicStore({
                 id: this.id + '-store',
-                target: this.storeUrl,
+                //target: this.storeUrl,
+                data: [],
                 idProperty: this.idProperty
                 });
             this.store = new Observable(basicStore);
+            
+            this.createContactStores(null);
             
             console.log("gridNode: " + this.gridNode);
             this.grid = new comboGrid({store: this.store, columns: this.getMainColumns()}, this.gridNode);
             var dblClickHndl = this.grid.on(".dgrid-row:dblclick", lang.hitch(this, "handleDblClick"));  
             console.log("dblClickHndl: " + dblClickHndl);
 
-            this.postalStore = new Observable(new Memory({idProperty:'contactMechId'}));
             this.postalGrid = new comboGrid({store: this.postalStore, subRows: this.getPostalColumns()}, this.postalGridNode);
             query("#postalGridAdd").on("click", lang.hitch(_this, "addPostalRow"));
 
-            this.phoneStore = new Observable(new Memory({idProperty:'contactMechId'}));
             this.phoneGrid = new comboGrid({store: this.phoneStore, columns: this.getPhoneColumns()}, this.phoneGridNode);
             query("#phoneGridAdd").on("click", lang.hitch(_this, "addPhoneRow"));
 
-            this.emailStore = new Observable(new Memory({idProperty:'contactMechId'}));
             this.emailGrid = new comboGrid({store: this.emailStore, columns: this.getEmailColumns()}, this.emailGridNode);
             query("#emailGridAdd").on("click", lang.hitch(_this, "addEmailRow"));
             query("input[name=saveDetail]").on("click", lang.hitch(_this, "submitDetailForm"));
+            query("input[name=showCreateButton]").on("click", lang.hitch(_this, "showCreateForm"));
             
+            var postalPurposeMemoryStore = new Memory({data: [
+							                     { name: "Shipping", id: "PostalShippingDest" },
+							                     { name: "FOB", id: "PostalShippingOrigin" },
+							                     { name: "Primary", id: "PostalPrimary" }
+                ]});
+            this.postalPurposeStore =   new ObjectStore({ objectStore: postalPurposeMemoryStore });
             return;
         },
         
@@ -106,18 +117,50 @@ define([
             return;
         },
         
+        showCreateForm: function() {
+            return;
+        },
+        
+        showEditForm: function(data) {
+            return;
+        },
+        
+        createContactStores: function(data) {
+            var postalData = [], emailData = [], phoneData = [];
+            if (data && data.postalData) {
+                postalData = data.postalData;
+            }
+            if (data && data.emailData) {
+                emailData = data.emailData;
+            }
+            if (data && data.phoneData) {
+                phoneData = data.phoneData;
+            }
+            this.postalStore = new Observable(new Memory({idProperty:'contactMechId', data: postalData}));
+            this.phoneStore = new Observable(new Memory({idProperty:'contactMechId', data: phoneData}));
+            this.emailStore = new Observable(new Memory({idProperty:'contactMechId', data: emailData}));
+            return;
+        },
+        
+        setContactStores: function() {
+            this.postalGrid.setStore(this.postalStore);
+            this.emailGrid.setStore(this.emailStore);
+            this.phoneGrid.setStore(this.phoneStore);
+            return;
+        },
+        
         addPartyData: function() {
             var partyTypeEnumId =  ["PtyPerson", "PtyOrganization"][Math.floor(Math.random() * 2)];
             var firstName =  "First_" + Math.floor(Math.random() * 2000);
             var lastName =  "Last_" + Math.floor(Math.random() * 2000);
             var orgName =  "Org_" + Math.floor(Math.random() * 2000);
-            this.detailForm.set("value", {
+            this.createForm.set("value", {
                 partyTypeEnumId: partyTypeEnumId,
                 firstName: firstName,
                 lastName: lastName,
                 organizationName: orgName
             });
-            console.log("form values: " + JSON.stringify(this.detailForm.get("value")));
+            console.log("form values: " + JSON.stringify(this.createForm.get("value")));
             return;
         },
         
@@ -128,10 +171,10 @@ define([
         },
         
         addPostalRow: function(evt) {
-            this.postalGrid.store.put({
-                address1: Math.round(Math.random() * 1000) +  " Addres's Street",
+            var contactMechId = this.postalGrid.store.put({
+                address1: Math.round(Math.random() * 1000) +  " Address Street",
                 postalCode: "1234" + Math.floor(Math.random() * 10),
-                city: ["NYC", "Orem", "Pittsburgh", "Mt. Lebanon"][Math.round(Math.random() * 4)],
+                city: 'Provo', //["NYC", "Orem", "Pittsburgh", "Mt. Lebanon"][Math.floor(Math.random() * 4)],
                 stateProvinceGeoId: 'USA_PA'
                 });
         },
@@ -143,14 +186,14 @@ define([
         },
         
         getMainColumns: function() {
-            return {
-							fullName: {label:'Name', sortable: true},
-							partyTypeEnumId: {label: 'Party Type', sortable: true, formatter: this.partyTypeFormatter},
-							email: {label: 'Email', sortable: false},
-							phone: {label: 'Phone', sortable: false},
-							city: 'City',
-							state: 'State'
-						};
+            return [
+							{field: 'partyId', label:'Name', sortable: true, formatter: this.fullNameFormatter},
+							{field: 'partyTypeEnumId', label: 'Party Type', sortable: true, formatter: this.partyTypeFormatter},
+							{field: 'emailData', label: 'Email', sortable: false, formatter: this.emailDataFormatter},
+							{field: 'phoneData', label: 'Phone', sortable: false, formatter: this.phoneDataFormatter},
+							{field: 'postalData', label: 'City', formatter: this.cityFormatter},
+							{field: 'postalData', label: 'State', formatter: this.stateFormatter}
+						];
 			},
         getPostalColumns: function() {
             return [
@@ -159,16 +202,20 @@ define([
 							     canEdit: this.canEdit}, TextBox),
 							editor({field:'city', label:'City', sortable: true, autoSave: true, canEdit: this.canEdit}, TextBox),
 							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true,  autoSave: true,
+							        editor: Select,
 							        editorArgs:
 							            {
+							                required: true,
+							                placeholder: "Must select a purpose",
+							                //store: this.postalPurposeStore
 							                options: [
+							                     { label: " - ", value: "" },
 							                     { label: "Shipping", value: "PostalShippingDest" },
 							                     { label: "FOB", value: "PostalShippingOrigin" },
 							                     { label: "Primary", value: "PostalPrimary" }
 							                     ]
 							            }
-							        }, 
-							        Select),
+							        }),
 							{field:'contactMechId', label:'', rowSpan: 2, sortable: false, formatter: this.formatAddButton}
 						],
 						[
@@ -259,24 +306,49 @@ define([
         
         handleDblClick: function(evt) {
             var row = this.grid.row(evt);
+            this.detailMode = 'edit';
             if(this.origEdit) {
                 if (!agutils.isEqual(this.origEdit, row)) {
                     this.handleDirty("Edit", function() {
-                            this.editForm.set("value", row);
-                            this.origEdit = this.editForm.set("value");
-                        });
+                        this.setEditFormData(row.data);
+                    });
                 }
             } else {
-                this.editForm.set("value", row);
-                this.origEdit = this.editForm.set("value");
+                this.setEditFormData(row.data);
             }
             return;
         },
         
-        partyFullNameFormatter: function (item) {
-                     var returnString = item.firstName + " " + item.lastName;
+        setEditFormData: function(data) {
+            if (data.partyTypeEnumId == 'PtyPerson') {
+                this.editForm.set("value", {lastName: data.lastName, middleName: data.middleName, firstName: data.firstName, partyTypeEnumId: data.partyTypeEnumId, partyId: data.partyId});
+            } else {
+                this.editForm.set("value", {organizationName: data.organizationName, partyTypeEnumId: data.partyTypeEnumId, partyId: data.partyId});
+            }
+            domStyle.set(this.createForm.domNode, "display", "none");
+            domStyle.set(this.editForm.domNode, "display", "block");
+            
+            this.createContactStores(data);
+            this.setContactStores(data);
+            this.detailMode = 'edit';
+            return;
+        },
+        
+        fullNameFormatter: function (value, item) {
+                     var returnString = "";
+                     switch (item.partyTypeEnumId) {
+                         case "PtyPerson":
+                             returnString = item.firstName + " " + item.lastName;
+                             break;
+                         case "PtyOrganization":
+                             returnString = item.organizationName;
+                             break;
+                         default:
+                             returnString = "";
+                             break;
+                     }
                      return returnString
-                 },
+        },
                  
         partyTypeFormatter: function (value, item) {
                      var returnString = "";
@@ -293,55 +365,105 @@ define([
                      }
                      return returnString
                  },
-                 
+        
+        emailDataFormatter: function(value, object) {
+            var returnVal = "";
+            if (dojo.isArray(value) && value.length) {
+                var emailRow = value[0];
+                returnVal = emailRow.emailAddress;
+            }
+            return returnVal;
+        },
+        
+        phoneDataFormatter: function(value, object) {
+            var returnVal = "";
+            if (dojo.isArray(value) && value.length) {
+                var phoneRow = value[0];
+                returnVal = phoneRow.contactNumber;
+            }
+            return returnVal;
+        },
+        
+        cityFormatter: function(value, object) {
+            var returnVal = "";
+            if (dojo.isArray(value) && value.length) {
+                var postalRow = value[0];
+                returnVal = postalRow.city;
+            }
+            return returnVal;
+        },
+        
+        stateFormatter: function(value, object) {
+            var returnVal = "";
+            if (dojo.isArray(value) && value.length) {
+                var postalRow = value[0];
+                returnVal = postalRow.stateProvinceGeoId;
+            }
+            return returnVal;
+        },
+        
         formatAddButton: function(data, object) {
             return "X";
         },
         
         submitDetailForm: function(evt) {
-            var detailValues = this.detailForm.get("value");
-            var submitValues = {partyTypeEnumId: detailValues.partyTypeEnumId};
-            if (detailValues.partyTypeEnumId == "PtyPerson") {
-                submitValues["firstName"] = detailValues.firstName;
-                submitValues["middleName"] = detailValues.middleName;
-                submitValues["lastName"] = detailValues.lastName;
-            } else {
-                submitValues["organizationName"] = detailValues.organizationName;
-            }
-            var postalData = array.map(this.postalGrid.store.data, function(row) {
-                if (!row.fromDate) {
-                    delete row.contactMechId;
+            
+            var _this = this;
+            window.setTimeout(function() {
+                _this.postalGrid.save();
+                _this.phoneGrid.save();
+                _this.emailGrid.save();
+                
+                var detailForm = _this.detailMode==='create' ? _this.createForm : _this.editForm;
+                var postUrl = _this.detailMode==='create' ? "party/addNewParty" : "party/updateParty";
+                
+                var detailValues = detailForm.get("value");
+                var submitValues = {partyTypeEnumId: detailValues.partyTypeEnumId, partyId:detailValues.partyId};
+                if (detailValues.partyTypeEnumId == "PtyPerson") {
+                    submitValues["firstName"] = detailValues.firstName;
+                    submitValues["middleName"] = detailValues.middleName;
+                    submitValues["lastName"] = detailValues.lastName;
+                } else {
+                    submitValues["organizationName"] = detailValues.organizationName;
                 }
-                return row;
-            }, this);
-            var emailData = array.map(this.emailGrid.store.data, function(row) {
-                if (!row.fromDate) {
-                    delete row.contactMechId;
-                }
-                return row;
-            }, this);
-            var phoneData = array.map(this.phoneGrid.store.data, function(row) {
-                if (!row.fromDate) {
-                    delete row.contactMechId;
-                }
-                return row;
-            }, this);
-            submitValues["postalData"] = postalData;
-            submitValues["emailData"] = emailData;
-            submitValues["phoneData"] = phoneData;
-            var submitValuesStr = encodeURI(JSON.stringify(submitValues));
-            var xhrDeferred = request("party/addNewParty",{
-                data: {data: submitValuesStr},
-                handleAs: "json",
-                method: "POST",
-                timeout: 10000
-            });
-            xhrDeferred.then(function(data) {
+                var postalData = array.map(_this.postalGrid.store.data, function(row) {
+                    if (row.contactMechId >= 0 && row.contactMechId < 1.0) {
+                        delete row.contactMechId;
+                    }
+                    return row;
+                }, _this);
+                var emailData = array.map(_this.emailGrid.store.data, function(row) {
+                    if (row.contactMechId >= 0 && row.contactMechId < 1.0) {
+                        delete row.contactMechId;
+                    }
+                    return row;
+                }, _this);
+                var phoneData = array.map(_this.phoneGrid.store.data, function(row) {
+                    if (row.contactMechId >= 0 && row.contactMechId < 1.0) {
+                        delete row.contactMechId;
+                    }
+                    return row;
+                }, _this);
+                submitValues["postalData"] = _this.postalGrid.store.data;
+                submitValues["emailData"] = _this.emailGrid.store.data;
+                submitValues["phoneData"] = _this.phoneGrid.store.data;
+                var submitValuesStr = encodeURI(JSON.stringify(submitValues));
+                var xhrDeferred = request(postUrl,{
+                    data: {data: submitValuesStr},
+                    handleAs: "json",
+                    method: "POST",
+                    timeout: 10000
+                });
+                xhrDeferred.then(function(data) {
+                    _this.store.put(data.items[0]);
+                    _this.setEditFormData(data.items[0]);
+                    return;
+                },
+                function(err) {
+                    console.log("err: " + err.toString());
+                });
                 return;
-            },
-            function(err) {
-                console.log("err: " + err.toString());
-            });
+            }, 50);
             return;
         }
 
