@@ -26,45 +26,96 @@ import org.moqui.impl.StupidUtilities
     //logger.info("TEST1 ddf: ${ddf}")
     ec.artifactExecution.disableAuthz()
 
-    String partyTypeEnumId = context.partyTypeEnumId
-    String firstName = context.firstName
-    String lastName = context.lastName
-    String organizationName = context.organizationName
-    String emailAddress = context.emailAddress
-    String phoneNumber = context.phoneNumber
-    String city = context.city
-    String state = context.state
     
-    logger.info("partyTypeEnumId: ${partyTypeEnumId}")
-    logger.info("lastName: ${lastName}")
-    logger.info("organizationName: ${organizationName}")
-    logger.info("emailAddress: ${emailAddress}")
-        EntityFind ef = ec.entity.makeFind("Party")
+    logger.info("context: ${context}")
+    EntityFind ef
+    Map joinKeys
+    String masterJoinAlias
+    
+    List<EntityConditionImplBase> condList = []
+    EntityConditionFactory ecf = ec.entity.getConditionFactory()
+    
+    if (!context.toPartyId) {
+        ef = ec.entity.makeFind("Party")
         EntityDynamicView edv = ef.makeEntityDynamicView()
         edv.addMemberEntity("PRTY", "Party", null, null, null)
         edv.addAliasAll("PRTY", null)
+        joinKeys = ['partyId':'partyId']
+        masterJoinAlias = "PRTY"
+    } else {
+        ef = ec.entity.makeFind("PartyRelationship")
+        EntityDynamicView edv = ef.makeEntityDynamicView()
+        edv.addMemberEntity("PRTYREL", "PartyRelationship", null, null, null)
+        edv.addAliasAll("PRTYREL", null)
+        joinKeys = ['fromPartyId':'partyId']
+        masterJoinAlias = "PRTYREL"
+    }
         
-        List<EntityConditionImplBase> condList = []
-        EntityConditionFactory ecf = ec.entity.getConditionFactory()
-        if (partyTypeEnumId == 'ORGANIZATION') {
-            edv.addMemberEntity("ORG", "Organization", "PRTY", null, ['partyId':'partyId'])
+    List<EntityConditionImplBase> orgOrPersonList = condList
+    if (isOrganizationType && isPartyType) {
+        orgOrPersonList = []
+    }
+    
+    if (isOrganizationType && context.organizationName) {
+            edv.addMemberEntity("ORG", "Organization", masterJoinAlias, null, joinKeys)
             edv.addAliasAll("ORG", null)
-            if (organizationName) {
-                EntityConditionImplBase cond = ecf.makeCondition("organizationName", EntityCondition.EQUALS, organizationName)
-                condList.push(cond)
-            }
-        } else {
-            edv.addMemberEntity("PERSN", "Person", "PRTY", null, ['partyId':'partyId'])
+            EntityConditionImplBase cond = ecf.makeCondition("organizationName", EntityCondition.EQUALS, context.organizationName)
+            orgOrPersonList.push(cond)
+        } 
+    if (isPartyType && (context.lastName || context.firstName)) {
+            edv.addMemberEntity("PERSN", "Person", masterJoinAlias, null, joinKeys)
             edv.addAliasAll("PERSN", null)
-            if (lastName) {
-                EntityConditionImplBase cond = ecf.makeCondition("lastName", EntityCondition.EQUALS, lastName)
+            if (context.lastName) {
+                EntityConditionImplBase cond = ecf.makeCondition("lastName", EntityCondition.EQUALS, context.lastName)
+                orgOrPersonList.push(cond)
+            }
+            if (context.firstName) {
+                EntityConditionImplBase cond = ecf.makeCondition("firstName", EntityCondition.EQUALS, context.firstName)
+                orgOrPersonList.push(cond)
+            }
+        }
+        
+    if (context.isOrganizationType && context.isPartyType) {
+        EntityConditionImplBase cond = ecf.makeCondition(orgOrPersonList, JoinOperator.OR)
+        condList.push(cond)
+    }
+    
+    if (context.emailAddress) {
+            edv.addMemberEntity("PRTY_CNTC_MECH", "PartyContactMech", masterJoinAlias, null, joinKeys)
+            edv.addAliasAll("PRTY_CNTC_MECH", null)
+            edv.addMemberEntity("CNTC_MECH", "ContactMech", "PRTY_CNTC_MECH", null, ['contactMechId':'contactMechId'])
+            EntityConditionImplBase cond = ecf.makeCondition("infoString", EntityCondition.EQUALS, context.emailAddress)
+            condList.push(cond)
+        } 
+        
+    if (context.phoneNumber) {
+            edv.addMemberEntity("PRTY_CNTC_MECH", "PartyContactMech", masterJoinAlias, null, joinKeys)
+            edv.addAliasAll("PRTY_CNTC_MECH", null)
+            edv.addMemberEntity("TELECOM", "TelecomNumber", "PRTY_CNTC_MECH", null, ['contactMechId':'contactMechId'])
+            EntityConditionImplBase cond = ecf.makeCondition("contactNumber", EntityCondition.EQUALS, context.phoneNumber)
+            condList.push(cond)
+        } 
+
+    if (context.city || context.stateProvinceGeoId || postalCode) {
+            edv.addMemberEntity("PRTY_CNTC_MECH", "PartyContactMech", masterJoinAlias, null, joinKeys)
+            edv.addAliasAll("PRTY_CNTC_MECH", null)
+            edv.addMemberEntity("POSTAL", "Person", "PRTY_CNTC_MECH", null, ['contactMechId':'contactMechId'])
+            edv.addAliasAll("POSTAL", null)
+            if (context.city) {
+                EntityConditionImplBase cond = ecf.makeCondition("lastName", EntityCondition.EQUALS, context.city)
                 condList.push(cond)
             }
-            if (firstName) {
-                EntityConditionImplBase cond = ecf.makeCondition("firstName", EntityCondition.EQUALS, firstName)
+            if (context.stateProvinceGeoId) {
+                EntityConditionImplBase cond = ecf.makeCondition("firstName", EntityCondition.EQUALS, context.stateProvinceGeoId)
+                condList.push(cond)
+            }
+            if (context.postalCode) {
+                EntityConditionImplBase cond = ecf.makeCondition("firstName", EntityCondition.EQUALS, context.postalCode)
                 condList.push(cond)
             }
         }
+        
+        
         List partyViewEntityList 
         if(condList.size) {
             EntityConditionImplBase entityListCond = ecf.makeCondition(condList)
@@ -74,7 +125,6 @@ import org.moqui.impl.StupidUtilities
         }
         logger.info("In: DynamicViewTest, query on Party and Organization, partyViewEntityList: ${partyViewEntityList}")
     List <EntityValue> partyListJson = new ArrayList()
-
 
     partyViewEntityList.each {party ->
         Map partyMap = ["partyId": party.partyId, "partyTypeEnumId": party.partyTypeEnumId]

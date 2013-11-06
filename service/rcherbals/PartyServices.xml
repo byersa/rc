@@ -14,14 +14,22 @@
 	<service verb="queryParty" type="script" authenticate="false"
 	         location="component://rc/script/rcherbals/party/queryParty.groovy">
 	    <in-parameters>
-	        <parameter name="partyTypeEnumId" required="false"/>
+	        <parameter name="isPartyType" required="false"/>
+	        <parameter name="isOrganizationType" required="false"/>
 	        <parameter name="firstName" required="false"/>
 	        <parameter name="lastName" required="false"/>
 	        <parameter name="organizationName" required="false"/>
 	        <parameter name="emailAddress" required="false"/>
 	        <parameter name="phoneNumber" required="false"/>
 	        <parameter name="city" required="false"/>
-	        <parameter name="state" required="false"/>
+	        <parameter name="stateProvinceGeoId" required="false"/>
+	        <parameter name="postalCode" required="false"/>
+	        <parameter name="toPartyId" required="false"/>
+	        <parameter name="searchRange" required="false"/>
+	        <parameter name="geoRestrain" required="false"/>
+	        <parameter name="geoCity" required="false"/>
+	        <parameter name="geoStateProvinceGeoId" required="false"/>
+	        <parameter name="geoPostalCode" required="false"/>
 	    </in-parameters>
 	    <out-parameters>
 	        <parameter name="items" type="List" required="true"/>
@@ -303,176 +311,6 @@
         </actions>
     </service>
     
-    <service verb="storeParty2" type="inline" authenticate="false">
-        <in-parameters>
-            <parameter name="firstName" required="false"/>
-            <parameter name="middleName"/>
-            <parameter name="lastName" required="false"/>
-
-	        <parameter name="organizationName" required="false"/>
-            
-            <parameter name="newPassword" required="false"/>
-            <parameter name="newPasswordVerify" required="false"/>
-
-            <parameter name="currencyUomId"/>
-            <parameter name="locale"/>
-            <parameter name="parentPartyId"/>
-            
-            <parameter name="primaryRoleTypeId" />
-            <parameter name="partyTypeEnumId" />
-            <parameter name="statusId" />
-            
-            <parameter name="postalContactMechId" type="String" required="false"/>
-            <parameter name="countryGeoId" type="String" required="false"/>
-            <parameter name="address1" type="String" required="false"/>
-            <parameter name="address2" type="String" required="false"/>
-            <parameter name="city" type="String" required="false"/>
-            <parameter name="stateProvinceGeoId" type="String" required="false"/>
-            <parameter name="postalCode" type="String" required="false"><text-digits/></parameter>
-
-            <parameter name="telecomContactMechId" type="String" required="false"/>
-            <parameter name="areaCode" type="String" required="false"><text-digits/></parameter>
-            <parameter name="contactNumber" type="String" required="false"><text-digits/></parameter>
-
-            <parameter name="emailContactMechId" type="String" required="false"/>
-            <parameter name="emailAddress" required="false"></parameter>
-            <parameter name="postalContactMechPurposeId" required="false" default-value="PRIMARY_LOCATION"/>
-            <parameter name="telecomContactMechPurposeId" required="false" default-value="PRIMARY_PHONE"/>
-            <parameter name="emailContactMechPurposeId" required="false" default-value="PRIMARY_EMAIL"/>
-        </in-parameters>
-        <out-parameters>
-            <parameter name="partyId" required="true"/>
-            <parameter name="postalContactMechId" required="false"/>
-            <parameter name="telecomContactMechId" required="false"/>
-            <parameter name="emailContactMechId" required="false"/>
-        </out-parameters>
-
-        <actions>
-            <set field="result.partyId" from="partyId"/>
-                    <log level="info" message="storeParty, context: ${context}"/>
-            <if condition="!partyId">
-                <service-call name="create#Party" in-map="[partyTypeEnumId:partyTypeEnumId]" out-map="newPartyOut"/>
-                    <check-errors>
-                    <log level="info" message="CreateRegister(1b) errors: ${ec.getMessage().getErrorsString()}"/>
-                    </check-errors>
-                    <log level="info" message="CreateRegister(1a) newPartyOut: ${newPartyOut}"/>
-                    <set field="result.partyId" from="newPartyOut.partyId"/>
-            </if>
-            
-            <if condition="partyId">
-                <if condition="partyTypeEnumId == 'PtyPerson'">
-                    <entity-find-one entity-name="Person" value-field="origPerson"/>
-                    <script>newPerson = origPerson.cloneValue()</script>
-                    <entity-set value-field="newPerson" include="nonpk"/>
-                    <if condition="newPerson != origPerson">
-                        <service-call name="update#Person" in-map="newPerson"/>
-                    </if>
-                </if>
-                <if condition="partyTypeEnumId == 'PtyOrganization'">
-                    <entity-find-one entity-name="Organization" value-field="origOrganization"/>
-                    <script>newOrganization = origOrganization.cloneValue()</script>
-                    <entity-set value-field="newOrganization" include="nonpk"/>
-                    <if condition="newOrganization != origOrganization">
-                        <service-call name="update#Organization" in-map="newOrganization"/>
-                    </if>
-                </if>
-            </if>
-            
-            <if condition="!partyId">
-                <if condition="partyTypeEnumId == 'PtyPerson'">
-                    <service-call name="create#Person" in-map="context">
-                        <field-map field-name="partyId" from="result.partyId"/>
-                    </service-call>
-                </if>
-                <if condition="partyTypeEnumId == 'PtyOrganization'">
-                    <service-call name="create#Organization" in-map="context">
-                        <field-map field-name="partyId" from="result.partyId"/>
-                    </service-call>
-                </if>
-            </if>
-            
-            <if condition="postalContactMechId">
-                <service-call name="mantle.party.ContactServices.update#PartyPostalAddress" in-map="context" out-map="paOut">
-                    <field-map field-name="partyId" from="result.partyId"/>
-                    <field-map field-name="contactMechId" from="postalContactMechId"/>
-                    <field-map field-name="contactMechPurposeId" from="postalContactMechPurposeId"/>
-                </service-call>
-                <check-errors>
-                <log level="info" message="CreateRegister(2a) errors: ${ec.getMessage().getErrorsString()}"/>
-                </check-errors>
-
-                <else>
-                  <if condition="address1 || address2 || city || postalCode || stateProvinceGeoId">
-                    <service-call name="mantle.party.ContactServices.create#PostalAddress" in-map="context" out-map="paOut">
-                        <field-map field-name="partyId" from="result.partyId"/>
-                        <field-map field-name="contactMechPurposeId" from="postalContactMechPurposeId"/>
-                    </service-call>
-                    <check-errors>
-                    <log level="info" message="CreateRegister(2b) errors: ${ec.getMessage().getErrorsString()}"/>
-                    </check-errors>
-                    <set field="result.postalContactMechId" from="paOut.contactMechId"/>
-                  </if>
-                </else>
-            </if>
-            
-            
-            <if condition="telecomContactMechId">
-                <service-call name="mantle.party.ContactServices.update#PartyTelecomNumber" in-map="context" out-map="tnOut">
-                    <field-map field-name="partyId" from="result.partyId"/>
-                    <field-map field-name="contactMechId" from="telecomContactMechId"/>
-                    <field-map field-name="contactMechPurposeId" from="telecomContactMechPurposeId"/>
-                </service-call>
-                <check-errors>
-                <log level="info" message="CreateRegister(3a) errors: ${ec.getMessage().getErrorsString()}"/>
-                </check-errors>
-
-                <else>
-                  <if condition="contactNumber">
-                    <service-call name="mantle.party.ContactServices.create#TelecomNumber" in-map="context" out-map="tnOut">
-                        <field-map field-name="partyId" from="result.partyId"/>
-                        <field-map field-name="contactMechPurposeId" from="telecomContactMechPurposeId"/>
-                    </service-call>
-                    <check-errors>
-                    <log level="info" message="CreateRegister(3b) errors: ${ec.getMessage().getErrorsString()}"/>
-                    </check-errors>
-                    <set field="result.telecomContactMechId" from="tnOut.contactMechId"/>
-                  </if>
-                </else>
-            </if>
-            
-            <check-errors>
-            <log level="info" message="CreateRegister(2b) errors: ${ec.getMessage().getErrorsString()}"/>
-            </check-errors>
-            
-            <if condition="emailContactMechId">
-                <service-call name="mantle.party.ContactServices.update#PartyContactOther" in-map="context" out-map="eaOut">
-                    <field-map field-name="partyId" from="result.partyId"/>
-                    <field-map field-name="infoString" from="emailAddress"/>
-                    <field-map field-name="contactMechId" from="emailContactMechId"/>
-                    <field-map field-name="contactMechPurposeId" from="emailContactMechPurposeId"/>
-                </service-call>
-                <check-errors>
-                <log level="info" message="CreateRegister(4a) errors: ${ec.getMessage().getErrorsString()}"/>
-                </check-errors>
-
-                <else>
-                  <if condition="emailAddress">
-                    <service-call name="mantle.party.ContactServices.create#EmailAddress" in-map="context" out-map="eaOut">
-                        <field-map field-name="partyId" from="result.partyId"/>
-                        <field-map field-name="contactMechPurposeId" from="emailContactMechPurposeId"/>
-                    </service-call>
-                    <check-errors>
-                    <log level="info" message="CreateRegister(4b) errors: ${ec.getMessage().getErrorsString()}"/>
-                    </check-errors>
-                    <set field="result.emailContactMechId" from="eaOut.contactMechId"/>
-                  </if>
-                </else>
-            </if>
-            <check-errors>
-            <log level="info" message="CreateRegister(5c) errors: ${ec.getMessage().getErrorsString()}"/>
-            </check-errors>
-        </actions>
-    </service>
     
     <service verb="getPartyAndContacts" type="inline" authenticate="false">
         <in-parameters>
