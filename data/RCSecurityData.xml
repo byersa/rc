@@ -19,9 +19,12 @@
             passwordHint="framework name, lowercase" currencyUomId="USD" locale="en_us" timeZone="US/Mountain"
             emailAddress="byersa@automationgroups.com"/>
     <moqui.security.UserGroupMember userGroupId="RCHERBALS_ADMIN" userId="RC_ADMIN" fromDate="2013-06-10 00:00:00.000"/>
+    <moqui.security.UserGroupMember userGroupId="ADMIN" userId="RC_ADMIN" fromDate="2013-06-10 00:00:00.000"/>
     <moqui.security.UserPermission userPermissionId="RCAdmin" description="RC Admin Permission"/>
     <moqui.security.UserGroupPermission userGroupId="ADMIN" userPermissionId="RCAdmin"
             fromDate="2013-06-10 00:00:00.000" thruDate=""/>
 
+    <moqui.security.ArtifactGroupMember artifactGroupId="RCHERBALS_APP" artifactName="mantle\\..*"
+            nameIsPattern="Y" artifactTypeEnumId="AT_SERVICE" inheritAuthz="Y"/>
 </entity-facade-xml>
 

@@ -38,13 +38,25 @@
 
     <service verb="storeParty" type="inline" authenticate="false">
         <in-parameters>
-            <parameter name="data" type="Map" required="false"/>
+            <parameter name="partyId" type="String" required="false"/>
+            <parameter name="parentPartyId" type="String" required="false"/>
+            <parameter name="roleTypeId" type="String" required="false" default-value="Reseller"/>
+            <parameter name="partyTypeEnumId" type="String" required="false"/>
+            <parameter name="relationshipTypeEnumId" type="String" required="false" default-value="PrtCustomer"/>
+            <parameter name="postalData" type="List" required="false"/>
+            <parameter name="emailData" type="List" required="false"/>
+            <parameter name="phoneData" type="List" required="false"/>
+            <parameter name="webData" type="List" required="false"/>
+            <parameter name="lastName" type="String" required="false"/>
+            <parameter name="firstName" type="String" required="false"/>
+            <parameter name="middleName" type="String" required="false"/>
+            <parameter name="organizationName" type="String" required="false"/>
         </in-parameters>
 	    <out-parameters>
-	        <parameter name="items" type="List" required="false"/>
+	        <parameter name="items" type="List" required="true"/>
 	    </out-parameters>
         <actions>
-            <script><![CDATA[
+            <!--script><![CDATA[
             import groovy.json.JsonSlurper
 
             ec.artifactExecution.disableAuthz()            
@@ -53,69 +65,95 @@
             def slurper = new JsonSlurper()
             def data = slurper.parseText(ec.web.parameters.data)
             //logger.info("result: ${result}")
-            ]]></script>
-            <log message="data  1:  ${data}"/>
-            <if condition="data.partyId">
-                <then>
+            ]]></script-->
+            <log message="context:  ${context}"/>
+            <set field="item" from="[:]"/>
+            <set field="item.partyId" from="context.partyId"/>
+            <if condition="partyId">
                     <entity-find-one entity-name="Party" value-field="party">
-                        <field-map field-name="partyId" from="data.partyId"/>
+                        <field-map field-name="partyId" from="partyId"/>
                     </entity-find-one>
+            </if>
+            <if condition="party">
+                <then>
                     <log message="party  (edit  1):  ${party}"/>
+                    <set field="item.partyId" from="party.partyId"/>
+                    <set field="item.partyTypeEnumId" from="party.partyTypeEnumId"/>
 
-                    <if condition="data.partyTypeEnumId=='PtyPerson'">
+                    <if condition="partyTypeEnumId=='PtyPerson'">
                         <then>
                             <entity-find-one entity-name="Person" value-field="person">
-                                <field-map field-name="partyId" from="data.partyId"/>
+                                <field-map field-name="partyId" from="partyId"/>
                             </entity-find-one>
                             <log message="person  (edit  1):  ${person}"/>
-                            <entity-set value-field="person" map="data"/>
+                            <entity-set value-field="person" map="context"/>
                             <entity-update value-field="person"/>
                             <log message="person  (edit  2):  ${person}"/>
+                            <set field="item.firstName" from="person.firstName"/>
+                            <set field="item.lastName" from="person.lastName"/>
+                            <set field="item.middleName" from="person.middleName"/>
                         </then>
                         <else>
                             <entity-find-one entity-name="Organization" value-field="organization">
-                                <field-map field-name="partyId" from="data.partyId"/>
+                                <field-map field-name="partyId" from="partyId"/>
                             </entity-find-one>
                             <log message="organization  (edit  1):  ${organization}"/>
-                            <entity-set value-field="organization" map="data"/>
+                            <entity-set value-field="organization" map="context"/>
                             <entity-update value-field="organization"/>
                             <log message="organization  (edit  2):  ${organization}"/>
+                            <set field="item.organizationName" from="organization.organizationName"/>
                         </else>
                     </if>                
                 </then>
                 <else>
                     <entity-make-value entity-name="Party" value-field="party"/>
                     <log message="party  (create  1):  ${party}"/>
-                    <entity-set value-field="party" include="nonpk" map="data"/>            
-                    <entity-sequenced-id-primary value-field="party"/>
+                    <entity-set value-field="party" include="nonpk" map="context"/>    
+                    <if condition="partyId">
+                        <then>
+                            <set field="party.partyId" from="partyId"/>
+                        </then>
+                        <else>
+                            <entity-sequenced-id-primary value-field="party"/>
+                        </else>
+                    </if>
                     <entity-create value-field="party"/>  
                     <log message="party  2:  ${party}"/>
-                    <set field="data.partyId" from="party.partyId"/>
+                    <set field="partyId" from="party.partyId"/>
                             
-                    <if condition="data.partyTypeEnumId=='PtyPerson'">
+                    <if condition="partyTypeEnumId=='PtyPerson'">
                             <entity-make-value entity-name="Person" value-field="person"/>
-                            <entity-set value-field="person" include="nonpk" map="data"/>  
+                            <entity-set value-field="person" include="nonpk" map="context"/>  
                             <log message="person:  ${person}"/>
                             <set field="person.partyId" from="party.partyId"/>
                             <log message="person2:  ${person}"/>
                             <entity-create value-field="person"/>  
                             <log message="person3:  ${person}"/>
+                            <set field="item.firstName" from="person.firstName"/>
+                            <set field="item.lastName" from="person.lastName"/>
+                            <set field="item.middleName" from="person.middleName"/>
                         <else>
                             <entity-make-value entity-name="Organization" value-field="organization"/>
-                            <entity-set value-field="organization" include="nonpk" map="data"/>  
+                            <entity-set value-field="organization" include="nonpk" map="context"/>  
                             <log message="organization:  ${organization}"/>
                             <set field="organization.partyId" from="party.partyId"/>
                             <log message="organization2:  ${organization}"/>
                             <entity-create value-field="organization"/>  
                             <log message="organization3:  ${organization}"/>
+                            <set field="item.organizationName" from="organization.organizationName"/>
                         </else>
                     </if>
                 </else>
             </if>
+                        <set field="item.partyId" from="party.partyId"/>
+                        <log message="item  (after  party):  ${item}"/>
+                        <log message="party  (after  party):  ${party}"/>
             
             <check-errors/>
-            <iterate list="data.postalData" entry="postal">
-                        <log message="postal  (0):  ${postal}"/>
+            
+            <set field="returnPostal" from="[]"/>
+            <iterate list="postalData" entry="postal">
+                        <log message="storeParty postal  ( edit):  ${postal}"/>
                 <if condition="postal.contactMechId">
                     <then>
                         <log message="postal.contactMechId  (0):  ${postal.contactMechId}"/>
@@ -130,23 +168,19 @@
                         <check-errors/>
                         <log message="postalAddressList:  ${postalAddressList}"/>
                         <set field="postalAddress" from="postalAddressList ?  postalAddressList[0]  :  null"/>
-                        <if condition="!postalAddress">
-                            <return/>
-                        </if>
                         <if>
                             <condition>
                                     <expression>
-                                    !((postal.address1 == postalAddress.address1) &amp;&amp; (postal.address2 == postalAddress.address2))
-                                    </expression>
-                                        <!--compare field="postal.address1" to-field="postalAddress.address1"/>
-                                        <compare field="postal.address2" to-field="postalAddress.address2"/>
-                                        <compare field="postal.city" to-field="postalAddress.city"/>
-                                        <compare field="postal.stateProvinceGeoId" to-field="postalAddress.stateProvinceGeoId"/>
-                                        <compare field="postal.postalCode" to-field="postalAddress.postalCode"/>
-                                        <compare field="postal.contactMechPurposeId" to-field="postalAddress.contactMechPurposeId"/>
-                                        <compare field="postal.fromDate" to-field="postalAddress.fromDate"/>
-                                        <compare field="postal.thruDate" to-field="postalAddress.thruDate"/-->
-                                
+                                    !((postal.address1 == postalAddress.address1) 
+                                        &amp;&amp; (postal.address2 == postalAddress.address2)
+                                        &amp;&amp; (postal.city == postalAddress.city)
+                                        &amp;&amp; (postal.stateProvinceGeoId == postalAddress.stateProvinceGeoId)
+                                        &amp;&amp; (postal.postalCode == postalAddress.postalCode)
+                                        &amp;&amp; (postal.contactMechPurposeId == postalAddress.contactMechPurposeId)
+                                        &amp;&amp; (postal.fromDate == postalAddress.fromDate)
+                                        &amp;&amp; (postal.thruDate == postalAddress.thruDate)
+                                        )
+                                    </expression>                                
                             </condition>
                             <then>
                                 <set field="postal.partyId" from="party.partyId"/>
@@ -170,13 +204,20 @@
                         <log message="postalOut  2:  ${postalOut}"/>
                         <check-errors/>
                         <set field="postal.contactMechId" from="postalOut.contactMechId"/>
+                        <!--set field="returnRec" from="[contactMechId: postalOut.contactMechId, address1: postalOut.address1, address2: postalOut.address2, city: postalOut.city, stateProvinceGeoId: postalOut.stateProvinceGeoId, postalCode: postalOut.postalCode]"/>
+                        <log message="returnRec:  ${returnRec}"/>
+                        <set field="returnPostal" from="returnPostal.push(returnRec)"/>
+                        <script><![CDATA[
+                             returnPostal.push(returnRec)
+                        ]]></script>
+                        <log message="returnPostal:  ${returnPostal}"/-->
                     </else>
                 </if>
             </iterate>
-            <log message="data.postalData  1:  ${data.postalData}"/>
+            <log message="postalData  1:  ${postalData}"/>
 <!--            
-            <log message="data.emailData  1:  ${data.emailData}"/>
-            <iterate list="data.emailData" entry="email">
+            <log message="emailData  1:  ${emailData}"/>
+            <iterate list="emailData" entry="email">
                 <if condition="email.contactMechId">
                     <then>
                         <entity-find-one entity-name="PartyContactMechInfo" value-field="emailAddress">
@@ -220,9 +261,9 @@
                     </else>
                 </if>
             </iterate>
-            <log message="data.emailData  1:  ${data.emailData}"/>
+            <log message="emailData  1:  ${emailData}"/>
             
-            <iterate list="data.phoneData" entry="phone">
+            <iterate list="phoneData" entry="phone">
                 <set field="phone.partyId" from="party.partyId"/>
                 <set field="phone.contactMechTypeEnumId" value="CmtTelecomNumber"/>
                 <log message="phone:  ${phone}"/>
@@ -231,10 +272,10 @@
                 <check-errors/>
                 <set field="phone.contactMechId" from="phoneOut.contactMechId"/>
             </iterate>
-            <log message="data.phoneData  1:  ${data.phoneData}"/>
+            <log message="phoneData  1:  ${phoneData}"/>
             
-            <log message="data.phoneData  2:  ${data.phoneData}"/>
-            <iterate list="data.phoneData" entry="phone">
+            <log message="phoneData  2:  ${phoneData}"/>
+            <iterate list="phoneData" entry="phone">
                 <if condition="phone.contactMechId">
                     <then>
                         <entity-find-one entity-name="PartyContactMechTelecomNumber" value-field="telecomNumber">
@@ -278,39 +319,244 @@
                     </else>
                 </if>
             </iterate>
-            <log message="data.phoneData  1:  ${data.phoneData}"/>
+            <log message="phoneData  1:  ${phoneData}"/>
             -->
-            <if condition="!data.partyId">
+            <set field="returnEmail" from="[]"/>
+            <iterate list="emailData" entry="email">
+                        <log message="storeParty email  ( edit):  ${email}"/>
+                <if condition="email.contactMechId">
+                    <then>
+                        <log message="email.contactMechId  (0):  ${email.contactMechId}"/>
+                        <set field="thisContactMechId" from="email.contactMechId"/>
+                        <log message="thisContactMechId  (0):  ${thisContactMechId}"/>
+                        <entity-find entity-name="PartyContactMech" list="emailAddressList">
+                            <econditions>
+                                <econdition field-name="partyId" from="party.partyId"/>
+                                <econdition field-name="contactMechId" from="thisContactMechId"/>
+                            </econditions>
+                        </entity-find>
+                        <check-errors/>
+                        <log message="emailAddressList:  ${emailAddressList}"/>
+                        <set field="emailAddress" from="emailAddressList ?  emailAddressList[0]  :  null"/>
+                        <if>
+                            <condition>
+                                    <expression>
+                                    !((email.infoString == emailAddress.infoString) 
+                                        &amp;&amp; (email.contactMechPurposeId == emailAddress.contactMechPurposeId)
+                                        &amp;&amp; (email.fromDate == emailAddress.fromDate)
+                                        &amp;&amp; (email.thruDate == emailAddress.thruDate)
+                                        )
+                                    </expression>                                
+                            </condition>
+                            <then>
+                                <set field="email.partyId" from="party.partyId"/>
+                                <log message="email  4:  ${email},  party.partyId:  ${party.partyId}"/>
+                            
+                                <service-call name="mantle.party.ContactServices.update#PartyContactOther" in-map="email" out-map="emailOut">
+                                </service-call>
+                                <log message="emailOut  4:  ${emailOut}"/>
+                                <check-errors/>
+                                <set field="email.contactMechId" from="emailOut.contactMechId"/>
+                            </then>
+                        </if>
+                    </then>
+                    <else>
+                        <set field="email.partyId" from="party.partyId"/>
+                        <set field="email.contactMechTypeEnumId" value="CmtEmailAddress"/>
+                        <set field="email.emailAddress" from="email.infoString"/>
+                        <log message="email  2:  ${email},  party.partyId:  ${party.partyId}"/>
+                    
+                        <service-call name="mantle.party.ContactServices.create#EmailAddress" in-map="email" out-map="emailOut">
+                        </service-call>
+                        <log message="emailOut  2:  ${emailOut}"/>
+                        <check-errors/>
+                        <set field="email.contactMechId" from="emailOut.contactMechId"/>
+                        <!--set field="returnRec" from="[contactMechId: emailOut.contactMechId, address1: emailOut.address1, address2: emailOut.address2, city: emailOut.city, stateProvinceGeoId: emailOut.stateProvinceGeoId, emailCode: emailOut.emailCode]"/>
+                        <log message="returnRec:  ${returnRec}"/>
+                        <set field="returnEmail" from="returnEmail.push(returnRec)"/>
+                        <script><![CDATA[
+                             returnEmail.push(returnRec)
+                        ]]></script>
+                        <log message="returnEmail:  ${returnEmail}"/-->
+                    </else>
+                </if>
+            </iterate>
+            
+            <set field="returnPhone" from="[]"/>
+            <iterate list="phoneData" entry="phone">
+                        <log message="storeParty phone  ( edit):  ${phone}"/>
+                <if condition="phone.contactMechId">
+                    <then>
+                        <log message="phone.contactMechId  (0):  ${phone.contactMechId}"/>
+                        <set field="thisContactMechId" from="phone.contactMechId"/>
+                        <log message="thisContactMechId  (0):  ${thisContactMechId}"/>
+                        <entity-find entity-name="PartyContactMechTelecomNumber" list="phoneNumberList">
+                            <econditions>
+                                <econdition field-name="partyId" from="party.partyId"/>
+                                <econdition field-name="contactMechId" from="thisContactMechId"/>
+                            </econditions>
+                        </entity-find>
+                        <check-errors/>
+                        <log message="phoneNumberList:  ${phoneNumberList}"/>
+                        <set field="phoneNumber" from="phoneNumberList ?  phoneNumberList[0]  :  null"/>
+                        <if>
+                            <condition>
+                                    <expression>
+                                    !((phone.contactNumber == phoneNumber.contactNumber) 
+                                        &amp;&amp; (phone.contactMechPurposeId == phoneNumber.contactMechPurposeId)
+                                        &amp;&amp; (phone.fromDate == phoneNumber.fromDate)
+                                        &amp;&amp; (phone.thruDate == phoneNumber.thruDate)
+                                        )
+                                    </expression>                                
+                            </condition>
+                            <then>
+                                <set field="phone.partyId" from="party.partyId"/>
+                                <log message="phone  4:  ${phone},  party.partyId:  ${party.partyId}"/>
+                            
+                                <service-call name="mantle.party.ContactServices.update#PartyTelecomNumber" in-map="phone" out-map="phoneOut">
+                                </service-call>
+                                <log message="phoneOut  4:  ${phoneOut}"/>
+                                <check-errors/>
+                                <set field="phone.contactMechId" from="phoneOut.contactMechId"/>
+                            </then>
+                        </if>
+                    </then>
+                    <else>
+                        <set field="phone.partyId" from="party.partyId"/>
+                        <set field="phone.contactMechTypeEnumId" value="CmtPhoneAddress"/>
+                        <set field="phone.phoneNumber" from="phone.infoString"/>
+                        <log message="phone  2:  ${phone},  party.partyId:  ${party.partyId}"/>
+                    
+                        <service-call name="mantle.party.ContactServices.create#TelecomNumber" in-map="phone" out-map="phoneOut">
+                        </service-call>
+                        <log message="phoneOut  2:  ${phoneOut}"/>
+                        <check-errors/>
+                        <set field="phone.contactMechId" from="phoneOut.contactMechId"/>
+                        <!--set field="returnRec" from="[contactMechId: phoneOut.contactMechId, address1: phoneOut.address1, address2: phoneOut.address2, city: phoneOut.city, stateProvinceGeoId: phoneOut.stateProvinceGeoId, phoneCode: phoneOut.phoneCode]"/>
+                        <log message="returnRec:  ${returnRec}"/>
+                        <set field="returnPhone" from="returnPhone.push(returnRec)"/>
+                        <script><![CDATA[
+                             returnPhone.push(returnRec)
+                        ]]></script>
+                        <log message="returnPhone:  ${returnPhone}"/-->
+                    </else>
+                </if>
+            </iterate>
+            <log message="emailData  1:  ${emailData}"/>
                 <entity-make-value entity-name="PartyRole" value-field="partyRole"/>
                 <set field="partyRole.partyId" from="party.partyId"/>
-                <set field="partyRole.roleTypeId" value="Reseller"/>
-                <entity-create value-field="partyRole"/>  
-                    <check-errors/>
-                <log message="partyRole  1:  ${partyRole}"/>
+                <set field="partyRole.roleTypeId" from="roleTypeId"/>
+                <entity-find-one entity-name="PartyRole" value-field="existPartyRole">
+                    <field-map field-name="partyId" from="partyRole.partyId"/>
+                    <field-map field-name="roleTypeId" from="partyRole.roleTypeId"/>
+                </entity-find-one>
+                <log message="storeParty, existPartyRole  1:  ${existPartyRole}"/>
+                <if condition="!existPartyRole">
+                    <entity-create value-field="partyRole"/>  
+                    <log message="partyRole  1:  ${partyRole}"/>
+                </if>
                 
-                <entity-make-value entity-name="PartyRelationship" value-field="partyRelation"/>
-                <set field="partyRelation.toPartyId" value="RCHERBALS"/>
-                <set field="partyRelation.toRoleTypeId" value="Owner"/>
-                <set field="partyRelation.fromPartyId" from="party.partyId"/>
-                <set field="partyRelation.fromRoleTypeId" value="Reseller"/>
-                <set field="partyRelation.relationshipTypeEnumId" value="PrtCustomer"/>
-                <set field="partyRelation.fromDate" from="ec.user.nowTimestamp"/>
-                <entity-sequenced-id-primary value-field="partyRelation"/>
-                <entity-create value-field="partyRelation"/>  
-                    <check-errors/>
+                <if condition="partyRelationshipId">
+                    <then>
+                        <entity-find-one entity-name="PartyRelationshipId" value-field="partyRelationship">
+                            <field-map field-name="partyRelationshipId" from="partyRelationshipId"/>
+                        </entity-find-one>
+                        <if condition="relationshipTypeEnumId != partyRelationship.relationshipTypeEnumId &amp;&amp; !partyRelationship.thruDate">
+                            <set field="partyRelationship.relationshipTypeEnumId" from="relationshipTypeEnumId" />
+                            <log message="storeParty, partyRelationship   (update):  ${partyRelationship}"/>
+                            <entity-update value-field="partyRelationship"/>  
+                        </if>
+                    </then>
+                    <else>
+                        <entity-make-value entity-name="PartyRelationship" value-field="partyRelation"/>
+                        <set field="partyRelation.toPartyId" from="parentPartyId"/>
+                        <set field="partyRelation.toRoleTypeId" value="Owner"/>
+                        <set field="partyRelation.fromPartyId" from="party.partyId"/>
+                        <set field="partyRelation.fromRoleTypeId" from="roleTypeId"/>
+                        <set field="partyRelation.relationshipTypeEnumId" from="relationshipTypeEnumId"/>
+                        <set field="partyRelation.fromDate" from="ec.user.nowTimestamp"/>
+                        <entity-sequenced-id-primary value-field="partyRelation"/>
+                        <entity-create value-field="partyRelation"/>  
+                    </else>
+                </if>
                 <log message="partyRelation  2:  ${partyRelation}"/>
-            </if>
-            <log message="result  2:  ${result}"/>
-            <script><![CDATA[
-            //import groovy.json.JsonBuilder
-            //def jsonBuilder = new JsonBuilder(data)
-            //result.data = jsonBuilder.toString()
-            //logger.info("in addNewParty 3, data: ${result.data}")
-            result.items = [data];
-            ]]></script>
+                
+                <set field="item.emailData" from="emailData"/>
+                <set field="item.parentPartyId" from="partyRelation.toPartyId"/>
+                <set field="item.relationshipTypeEnumId" from="partyRelation.relationshipTypeEnumId"/>
+                <set field="item.partyRelationshipId" from="partyRelation.partyRelationshipId"/>
+                <log message="item:  ${item}"/>
+                <set field="item2" from="[]"/>
+                <set field="item2[0]" from="item"/>
+                
+                <log message="item2:  ${item2}"/>
+                <set field="result.items" from="item2"/>
+                <check-errors/>
+                <log message="result  2:  ${result}"/>
         </actions>
     </service>
     
+    <service verb="deleteParty" type="inline" authenticate="false">
+        <in-parameters>
+            <parameter name="partyId" type="String" required=" true"/>
+            <parameter name="parentPartyId" type="String" required="false" default-value="RCHERBALS"/>
+            <parameter name="relationshipTypeEnumId" type="String" required="false"/>
+            <parameter name="roleTypeId" type="String" required="false"/>
+            
+        </in-parameters>
+	    <out-parameters>
+	    </out-parameters>
+        <actions>
+            <log message="deleteParty, context:  ${context}"/>
+            <entity-find entity-name="PartyRelationship" list="partyRelationshipList">
+                <econditions>
+                    <econdition field-name="toPartyId" from="parentPartyId"/>
+                    <econdition field-name="relationshipTypeEnumId" from="relationshipTypeEnumId" ignore-if-empty="true"/>
+                    <econdition field-name="roleTypeId" from="roleTypeId" ignore-if-empty="true"/>
+                    <econdition field-name="fromPartyId" from="partyId" ignore-if-empty="false"/>
+                </econditions>
+            </entity-find>
+            <log message="deleteParty, partyRelationshipList:  ${partyRelationshipList}"/>
+            <iterate entry="partyRelation" list="partyRelationshipList">
+                <entity-find entity-name="PartyContactMech" list="partyContactMechList">
+                    <econditions>
+                        <econdition field-name="partyId" from="partyRelation.fromPartyId"/>
+                    </econditions>
+                </entity-find>
+                <iterate entry="partyContactMech" list="partyContactMechList">
+                    <entity-delete value-field="partyContactMech"/>
+                    <entity-delete-by-condition entity-name="PostalAddress" >
+                        <econdition field-name="contactMechId" from="partyContactMech.contactMechId"/>
+                    </entity-delete-by-condition>
+                    <entity-delete-by-condition entity-name="TelecomNumber" >
+                        <econdition field-name="contactMechId" from="partyContactMech.contactMechId"/>
+                    </entity-delete-by-condition>
+                    <entity-delete-by-condition entity-name="ContactMech" >
+                        <econdition field-name="contactMechId" from="partyContactMech.contactMechId"/>
+                    </entity-delete-by-condition>
+                </iterate>
+                <entity-delete-by-condition entity-name="PartyRelationship" >
+                    <econdition field-name="toPartyId" from="thisPartyId"/>
+                </entity-delete-by-condition>
+                <entity-delete-by-condition entity-name="ProductParty" >
+                    <econdition field-name="partyId" from="thisPartyId"/>
+                </entity-delete-by-condition>
+                <entity-delete-by-condition entity-name="ProductCategoryParty" >
+                    <econdition field-name="partyId" from="thisPartyId"/>
+                </entity-delete-by-condition>
+                <set field="thisPartyId" from="partyRelation.fromPartyId"/>
+                <entity-delete value-field="partyRelation"/>
+                <entity-delete-by-condition entity-name="Person" >
+                    <econdition field-name="partyId" from="thisPartyId"/>
+                </entity-delete-by-condition>
+                <entity-delete-by-condition entity-name="Organization" >
+                    <econdition field-name="partyId" from="thisPartyId"/>
+                </entity-delete-by-condition>
+            </iterate>
+            <script><![CDATA[
+            ]]></script>
+        </actions>
+    </service>
     
     <service verb="getPartyAndContacts" type="inline" authenticate="false">
         <in-parameters>

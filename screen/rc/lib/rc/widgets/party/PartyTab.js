@@ -181,7 +181,7 @@ define([
         
         addEmailRow: function(evt) {
             this.emailGrid.store.put({
-                emailAddress: "email." + Math.round(Math.random() * 1000) + "@nomail.com"
+                infoString: "email." + Math.round(Math.random() * 1000) + "@nomail.com"
                 });
         },
         
@@ -285,7 +285,7 @@ define([
 							            }
 							        }, 
 							        Select),
-							editor({field:'emailAddress', label:'Email', sortable: true, autoSave: true, 
+							editor({field:'infoString', label:'Email', sortable: true, autoSave: true, 
 							        editorArgs:{
 							                placeholder: 'email address',
 							                validator: function(value) {
@@ -370,7 +370,7 @@ define([
             var returnVal = "";
             if (dojo.isArray(value) && value.length) {
                 var emailRow = value[0];
-                returnVal = emailRow.emailAddress;
+                returnVal = emailRow.infoString;
             }
             return returnVal;
         },

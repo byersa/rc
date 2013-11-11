@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-facade-xml type="seed">
+    <RoleType description="Reseller" roleTypeId="Reseller"/>
+    <RoleType description="Reseller - Online Reseller" parentTypeId="Reseller" roleTypeId="ResellerOnline"/>
+    <RoleType description="Reseller - Retail Reseller" parentTypeId="Reseller" roleTypeId="ResellerRetail"/>
+
+</entity-facade-xml>
+
