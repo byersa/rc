@@ -29,42 +29,48 @@ import org.moqui.impl.StupidUtilities
     
     logger.info("context: ${context}")
     EntityFind ef
-    Map joinKeys
+    Map <String, String> joinKeys = ['partyId':'partyId']
     String masterJoinAlias
+    EntityDynamicView edv
     
     List<EntityConditionImplBase> condList = []
     EntityConditionFactory ecf = ec.entity.getConditionFactory()
+    logger.info("queryParty, context: ${context}, masterJoinAlias: ${masterJoinAlias}, joinKeys: ${joinKeys}");
     
-    if (!context.toPartyId) {
+        this.masterJoinAlias = "PTY"
         ef = ec.entity.makeFind("Party")
-        EntityDynamicView edv = ef.makeEntityDynamicView()
-        edv.addMemberEntity("PRTY", "Party", null, null, null)
-        edv.addAliasAll("PRTY", null)
-        joinKeys = ['partyId':'partyId']
-        masterJoinAlias = "PRTY"
-    } else {
-        ef = ec.entity.makeFind("PartyRelationship")
-        EntityDynamicView edv = ef.makeEntityDynamicView()
-        edv.addMemberEntity("PRTYREL", "PartyRelationship", null, null, null)
-        edv.addAliasAll("PRTYREL", null)
-        joinKeys = ['fromPartyId':'partyId']
-        masterJoinAlias = "PRTYREL"
-    }
+        edv = ef.makeEntityDynamicView()
+        edv.addMemberEntity("PTY", "Party", null, null, null)
+        edv.addAliasAll("PTY", null)
+            edv.addMemberEntity("ORG", "Organization", this.masterJoinAlias, true, ['partyId':'partyId'])
+            edv.addAliasAll("ORG", null)
+            edv.addMemberEntity("PERSN", "Person", this.masterJoinAlias, true, ['partyId':'partyId'])
+            edv.addAliasAll("PERSN", null)
+
+    if (context.toPartyId) {
+        //this.masterJoinAlias = "PTYREL"
+        //ef = ec.entity.makeFind("PartyRelationship")
+        //edv = ef.makeEntityDynamicView()
+        edv.addMemberEntity("PTYREL", "PartyRelationship", this.masterJoinAlias, null, ['fromPartyId':'partyId'])
+        edv.addAliasAll(this.masterJoinAlias, null)
         
+        // edv.addMemberEntity("PTY", "Party", this.masterJoinAlias, null, ['fromPartyId':'partyId'])
+        // edv.addAliasAll("PTY", null)
+    }
+    ef.limit(context.limit)
+    
     List<EntityConditionImplBase> orgOrPersonList = condList
     if (isOrganizationType && isPartyType) {
         orgOrPersonList = []
     }
     
+    
     if (isOrganizationType && context.organizationName) {
-            edv.addMemberEntity("ORG", "Organization", masterJoinAlias, null, joinKeys)
-            edv.addAliasAll("ORG", null)
+            
             EntityConditionImplBase cond = ecf.makeCondition("organizationName", EntityCondition.EQUALS, context.organizationName)
             orgOrPersonList.push(cond)
         } 
     if (isPartyType && (context.lastName || context.firstName)) {
-            edv.addMemberEntity("PERSN", "Person", masterJoinAlias, null, joinKeys)
-            edv.addAliasAll("PERSN", null)
             if (context.lastName) {
                 EntityConditionImplBase cond = ecf.makeCondition("lastName", EntityCondition.EQUALS, context.lastName)
                 orgOrPersonList.push(cond)
@@ -80,83 +86,74 @@ import org.moqui.impl.StupidUtilities
         condList.push(cond)
     }
     
+    // edv.addMemberEntity("PTY_CNTC_MECH", "PartyContactMech", this.masterJoinAlias, true, ['partyId':'partyId'])
+    // edv.addAliasAll("PTY_CNTC_MECH", null)
+    
     if (context.emailAddress) {
-            edv.addMemberEntity("PRTY_CNTC_MECH", "PartyContactMech", masterJoinAlias, null, joinKeys)
-            edv.addAliasAll("PRTY_CNTC_MECH", null)
-            edv.addMemberEntity("CNTC_MECH", "ContactMech", "PRTY_CNTC_MECH", null, ['contactMechId':'contactMechId'])
+            edv.addMemberEntity("PTY_CNTC_MECH_EMAIL", "PartyContactMech", this.masterJoinAlias, true, ['partyId':'partyId'])
+            edv.addAliasAll("PTY_CNTC_MECH_EMAIL", null)
+            edv.addMemberEntity("CNTC_MECH", "ContactMech", "PTY_CNTC_MECH_EMAIL", true, ['contactMechId':'contactMechId'])
+            edv.addAliasAll("CNTC_MECH", null)
             EntityConditionImplBase cond = ecf.makeCondition("infoString", EntityCondition.EQUALS, context.emailAddress)
             condList.push(cond)
         } 
         
-    if (context.phoneNumber) {
-            edv.addMemberEntity("PRTY_CNTC_MECH", "PartyContactMech", masterJoinAlias, null, joinKeys)
-            edv.addAliasAll("PRTY_CNTC_MECH", null)
-            edv.addMemberEntity("TELECOM", "TelecomNumber", "PRTY_CNTC_MECH", null, ['contactMechId':'contactMechId'])
-            EntityConditionImplBase cond = ecf.makeCondition("contactNumber", EntityCondition.EQUALS, context.phoneNumber)
+    if (context.contactNumber) {
+            edv.addMemberEntity("PTY_CNTC_MECH_PHONE", "PartyContactMech", this.masterJoinAlias, true, ['partyId':'partyId'])
+            edv.addAliasAll("PTY_CNTC_MECH_PHONE", null)
+            edv.addMemberEntity("TELECOM", "TelecomNumber", "PTY_CNTC_MECH_PHONE", true, ['contactMechId':'contactMechId'])
+            edv.addAliasAll("TELECOM", null)
+            EntityConditionImplBase cond = ecf.makeCondition("contactNumber", EntityCondition.EQUALS, context.contactNumber)
             condList.push(cond)
         } 
 
     if (context.city || context.stateProvinceGeoId || postalCode) {
-            edv.addMemberEntity("PRTY_CNTC_MECH", "PartyContactMech", masterJoinAlias, null, joinKeys)
-            edv.addAliasAll("PRTY_CNTC_MECH", null)
-            edv.addMemberEntity("POSTAL", "Person", "PRTY_CNTC_MECH", null, ['contactMechId':'contactMechId'])
+            edv.addMemberEntity("PTY_CNTC_MECH_POSTAL", "PartyContactMech", this.masterJoinAlias, true, ['partyId':'partyId'])
+            edv.addAliasAll("PTY_CNTC_MECH_POSTAL", null)
+            edv.addMemberEntity("POSTAL", "PostalAddress", "PTY_CNTC_MECH_POSTAL", true, ['contactMechId':'contactMechId'])
             edv.addAliasAll("POSTAL", null)
             if (context.city) {
-                EntityConditionImplBase cond = ecf.makeCondition("lastName", EntityCondition.EQUALS, context.city)
+                EntityConditionImplBase cond = ecf.makeCondition("city", EntityCondition.EQUALS, context.city)
                 condList.push(cond)
             }
             if (context.stateProvinceGeoId) {
-                EntityConditionImplBase cond = ecf.makeCondition("firstName", EntityCondition.EQUALS, context.stateProvinceGeoId)
+                EntityConditionImplBase cond = ecf.makeCondition("stateProvinceGeoId", EntityCondition.EQUALS, context.stateProvinceGeoId)
                 condList.push(cond)
             }
             if (context.postalCode) {
-                EntityConditionImplBase cond = ecf.makeCondition("firstName", EntityCondition.EQUALS, context.postalCode)
+                EntityConditionImplBase cond = ecf.makeCondition("postalCode", EntityCondition.EQUALS, context.postalCode)
                 condList.push(cond)
             }
         }
         
         
+            List<Node> mbrnds = edv.getMemberEntityNodes()
+            logger.info("queryParty, mbrnds(final): ${mbrnds}")
+        logger.info("In: queryParty, query on Party and Organization, condList: ${condList}")
         List partyViewEntityList 
         if(condList.size) {
             EntityConditionImplBase entityListCond = ecf.makeCondition(condList)
+            logger.info("In: queryParty, entityListCond: ${entityListCond}")
             partyViewEntityList = ef.condition(entityListCond).list()
         } else {
             partyViewEntityList = ef.list()
         }
-        logger.info("In: DynamicViewTest, query on Party and Organization, partyViewEntityList: ${partyViewEntityList}")
+        logger.info("In: queryParty, query on Party and Organization, partyViewEntityList(${partyViewEntityList.size()}: ${partyViewEntityList}")
     List <EntityValue> partyListJson = new ArrayList()
 
     partyViewEntityList.each {party ->
         Map partyMap = ["partyId": party.partyId, "partyTypeEnumId": party.partyTypeEnumId]
         EntityValue person, org
-        if (party.partyTypeEnumId == "PERSON") {
+        if (party.partyTypeEnumId == "PtyPerson") {
             //person = ec.entity.makeFind("Person").condition(["partyId": party.partyId]).one()
             partyMap["fullName"] = party.firstName + " " + party.lastName
-        } else {
+        }
+        if (party.partyTypeEnumId == "PtyOrganization") {
             //org = ec.entity.makeFind("Organization").condition(["partyId": party.partyId]).one()
             partyMap["fullName"] = party.organizationName
         }
         partyListJson.push(partyMap)
     }
-    /*
-    List <EntityValue> partyList = ec.entity.makeFind("Party").list()
-    logger.info("partyList: ${partyList}")
-    List <EntityValue> partyListJson = new ArrayList()
-
-
-    partyList.each {party ->
-        Map partyMap = ["partyId": party.partyId, "partyTypeEnumId": party.partyTypeEnumId]
-        EntityValue person, org
-        if (party.partyTypeEnumId == "PERSON") {
-            person = ec.entity.makeFind("Person").condition(["partyId": party.partyId]).one()
-            partyMap["fullName"] = person.firstName + " " + person.lastName
-        } else {
-            org = ec.entity.makeFind("Organization").condition(["partyId": party.partyId]).one()
-            partyMap["fullName"] = org.organizationName
-        }
-        partyListJson.push(partyMap)
-    }
-    */
     Map <String, Object> result = new HashMap()
     result.items = partyListJson
     return result

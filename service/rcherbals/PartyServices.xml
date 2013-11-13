@@ -14,22 +14,27 @@
 	<service verb="queryParty" type="script" authenticate="false"
 	         location="component://rc/script/rcherbals/party/queryParty.groovy">
 	    <in-parameters>
-	        <parameter name="isPartyType" required="false"/>
-	        <parameter name="isOrganizationType" required="false"/>
+	        <parameter name="isPersonType" type="Boolean" required="false" default-value="false"/>
+	        <parameter name="isOrganizationType" type="Boolean" required="false" default-value="false"/>
 	        <parameter name="firstName" required="false"/>
 	        <parameter name="lastName" required="false"/>
 	        <parameter name="organizationName" required="false"/>
 	        <parameter name="emailAddress" required="false"/>
-	        <parameter name="phoneNumber" required="false"/>
+	        <parameter name="contactNumber" required="false"/>
 	        <parameter name="city" required="false"/>
 	        <parameter name="stateProvinceGeoId" required="false"/>
 	        <parameter name="postalCode" required="false"/>
 	        <parameter name="toPartyId" required="false"/>
+	        <parameter name="fromPartyIdList" type="List" required="false"/>
 	        <parameter name="searchRange" required="false"/>
 	        <parameter name="geoRestrain" required="false"/>
 	        <parameter name="geoCity" required="false"/>
 	        <parameter name="geoStateProvinceGeoId" required="false"/>
 	        <parameter name="geoPostalCode" required="false"/>
+	        
+	        <parameter name="offset" type="Integer" default-value="0" required="false"/>
+	        <parameter name="limit" type="Integer" default-value="100" required="false"/>
+	        <parameter name="pageSize" type="Integer" default-value="500" required="false"/>
 	    </in-parameters>
 	    <out-parameters>
 	        <parameter name="items" type="List" required="true"/>
@@ -398,14 +403,14 @@
                         </entity-find>
                         <check-errors/>
                         <log message="phoneNumberList:  ${phoneNumberList}"/>
-                        <set field="phoneNumber" from="phoneNumberList ?  phoneNumberList[0]  :  null"/>
+                        <set field="telecomNumber" from="phoneNumberList ?  phoneNumberList[0]  :  null"/>
                         <if>
                             <condition>
                                     <expression>
-                                    !((phone.contactNumber == phoneNumber.contactNumber) 
-                                        &amp;&amp; (phone.contactMechPurposeId == phoneNumber.contactMechPurposeId)
-                                        &amp;&amp; (phone.fromDate == phoneNumber.fromDate)
-                                        &amp;&amp; (phone.thruDate == phoneNumber.thruDate)
+                                    !((phone.contactNumber == telecomNumber.contactNumber) 
+                                        &amp;&amp; (phone.contactMechPurposeId == telecomNumber.contactMechPurposeId)
+                                        &amp;&amp; (phone.fromDate == telecomNumber.fromDate)
+                                        &amp;&amp; (phone.thruDate == telecomNumber.thruDate)
                                         )
                                     </expression>                                
                             </condition>
@@ -424,7 +429,7 @@
                     <else>
                         <set field="phone.partyId" from="party.partyId"/>
                         <set field="phone.contactMechTypeEnumId" value="CmtPhoneAddress"/>
-                        <set field="phone.phoneNumber" from="phone.infoString"/>
+                        <!--set field="phone.contactNumber" from="phonecontactNumber"/-->
                         <log message="phone  2:  ${phone},  party.partyId:  ${party.partyId}"/>
                     
                         <service-call name="mantle.party.ContactServices.create#TelecomNumber" in-map="phone" out-map="phoneOut">
