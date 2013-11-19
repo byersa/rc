@@ -146,7 +146,7 @@ class PartyQueryTest extends Specification {
                  
         where:
         _toPartyId | _fromPartyIdList | _isOrganizationType | _isPersonType | _organizationName | _contactNumber | _city | _limit | _offset | _pageSize
-        "RCHERBALS" | null     | true | false | "Green Earth" | "607-432-7160" | "Oneonta" | 5 | 0 | 20
+        "RCHERBALS" | null     | true | false | "Green Earth" | "607-432-7160" | "One%" | 5 | 0 | 20
     }
     def "phone and postal query"() {
         expect:

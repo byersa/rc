@@ -10,9 +10,34 @@
         </service-call>
       <default-response type="none"/>
     </transition>
+    <transition name="updateParty">
+        <actions>
+            <script><![CDATA[
+            import groovy.json.JsonSlurper
+
+            ec.artifactExecution.disableAuthz()            
+            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("updateParty")
+            logger.info("in updateParty 2, data: ${ec.web.parameters}")
+            def slurper = new JsonSlurper()
+            ec.web.parameters.postalData = slurper.parseText(ec.web.parameters.postalData)
+            ec.web.parameters.phoneData = slurper.parseText(ec.web.parameters.phoneData)
+            ec.web.parameters.emailData = slurper.parseText(ec.web.parameters.emailData)
+            logger.info("ec.web.parameters: ${ec.web.parameters}")
+            ]]></script>
+            <script></script>
+            <service-call name="rcherbals.PartyServices.storeParty" in-map="ec.web.parameters" out-map="updatedData">
+            </service-call>
+            <script><![CDATA[
+                ec.web.sendJsonResponse(updatedData)
+            ]]></script>
+        </actions>
+      <default-response type="none"/>
+    </transition>
     <transition name="getPartyList">
-        <service-call name="rcherbals.PartyServices.getPartyList" in-map="ec.web.parameters"
+        <service-call name="rcherbals.PartyServices.queryParty" in-map="ec.web.parameters"
                       web-send-json-response="true">
+                      <field-map field-name="toPartyId" value="RCHERBALS"/>
+                      <field-map field-name="partyTypeEnumId" value="PtyOrganization"/>
         </service-call>
         <default-response type="none"/>
     </transition>

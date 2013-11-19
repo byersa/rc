@@ -85,8 +85,8 @@ class StorePartyTest extends Specification {
             org.organizationName == _organizationName
                  
         where:
-        _partyId | _partyTypeEnumId | _organizationName 
-        null     | "PtyOrganization"   | "ABC Company"          
+        _partyId | _partyTypeEnumId | _organizationName | offset | limit | pageSize
+        null     | "PtyOrganization"   | "ABC Company"  | 0      | 3 | 20       
     }
     
     def "create Person only"() {

@@ -1,33 +1,85 @@
 <div>
 
-        <div data-dojo-type="dijit.layout.ContentPane" class="dgridmod-header" region="top" 
-              style="height:20px;"
+        <div data-dojo-type="dijit.layout.ContentPane" class="dgridmod-header" region="top"
+              data-dojo-attach-point="topRegion"
+               data-dojo-props="splitter: true"
         >
+        <div>
             <div data-dojo-type="dijit/form/Form" class="dgridmod-query"
                  data-dojo-attach-point="queryForm"
                  data-dojo-props="action: 'javascript:void(0)'">
-              <label for="partyTypeEnumId">Party Type</label>
-              <div name="partyTypeEnumId" data-dojo-type="dijit/form/FilteringSelect">
-                <option value="PtyPerson">Party</option>
-                <option value="PtyOrganization">Organization</option>
-              </div>        
-              <label for="lastName">Last Name</label>
-              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'lastName'"></div>
-              <label for="firstName">First Name</label>
-              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'firstName'"></div>
-              <label for="organizationName">Organization Name</label>
-              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'organizationName'"></div>
-              <label for="emailAddress">Email Address</label>
-              <div data-dojo-type="dijit/form/TextBox" data-dojo-props="name:'emailAddress'"></div>
-                <div data-dojo-type="dijit/form/Button" type="submit">Submit</div>
+                <div data-dojo-type="dijit/form/Button" name="querySubmit" type="submit">Submit</div>
+                <div data-dojo-type="dijit/form/Button" type="button">Cancel</div>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>Person</th>
+                                <th>First Name</th>
+                                <th>MI</th>
+                                <th>Last Name</th>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <div data-dojo-type="dijit/form/RadioButton" name="partyTypeEnumId" 
+                                         value="PtyPerson"></div>
+                                </th>
+                                <th><div data-dojo-type="dijit/form/TextBox" name="firstName"></div></th>
+                                <th><div data-dojo-type="dijit/form/TextBox" name="middleName"></div></th>
+                                <th><div data-dojo-type="dijit/form/TextBox" name="lastName"></div></th>
+                            </tr>
+                            <tr>
+                                <th>Organization</th>
+                                <th colspan="3">Organization Name</th>
+                            </tr>
+                            <tr>
+                                <th>
+                                    <div data-dojo-type="dijit/form/RadioButton" name="partyTypeEnumId" 
+                                        checked value="PtyOrganization"></div>
+                                </th>
+                                <th colspan="3"><div data-dojo-type="dijit/form/TextBox" name="organizationName"></div></th>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th>Street</th>
+                                <th>City</th>
+                                <th>State</th>
+                                <th>Zip</th>
+                            </tr>
+                            <tr>
+                                <th><div data-dojo-type="dijit/form/TextBox" name="address1"></div></th>
+                                <th><div data-dojo-type="dijit/form/TextBox" name="city"></div></th>
+                                <th><div data-dojo-type="dijit/form/TextBox" name="stateProvinceGeoId"></div></th>
+                                <th><div data-dojo-type="dijit/form/TextBox" name="postalCode"></div></th>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <table>
+                        <tbody>
+                            <tr>
+                                <th colspan="2">Email</th>
+                                <th colspan="2">Phone</th>
+                            </tr>
+                            <tr>
+                                <th colspan="2"><div data-dojo-type="dijit/form/TextBox" name="emailAddress"></div></th>
+                                <th colspan="2"><div data-dojo-type="dijit/form/TextBox" name="contactNumber"></div></th>
+                            </tr>
+                        </tbody>
+                    </table>
+                <div data-dojo-type="dijit/form/Button" name="querySubmit"  type="submit">Submit</div>
+                <div data-dojo-type="dijit/form/Button" type="button">Cancel</div>
             </div>
         </div>
+        </div>
+
         <div data-dojo-type="dijit.layout.ContentPane" class="dgridmod-footer" region="bottom" 
-              style="height:300px;"
+              data-dojo-attach-point="bottomRegion"
+               data-dojo-props="splitter: true"
         >
-            <div>
-                <div data-dojo-type="dijit/form/Button" name="saveDetail" type="button"
-                >Save</div>
+                <div data-dojo-type="dijit/form/Button" name="saveDetail"  type="submit">Save</div>
+                <div data-dojo-type="dijit/form/Button" name="cancelDetail" type="button">Cancel</div>
                 <div data-dojo-type="dijit/form/Form" class="partytab-create"
                      data-dojo-attach-point="createForm"
                      data-dojo-props="action: 'javascript:void(0)'">
@@ -63,7 +115,7 @@
                     </table>
                 </div>
                 <div data-dojo-type="dijit/form/Form" class="partytab-edit"
-                     data-dojo-attach-point="editForm"
+                     data-dojo-attach-point="editFormPerson"
                      data-dojo-props="action: 'javascript:void(0)'">
                     <table>
                         <tbody>
@@ -79,6 +131,10 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+                <div data-dojo-type="dijit/form/Form" class="partytab-edit"
+                     data-dojo-attach-point="editFormOrg"
+                     data-dojo-props="action: 'javascript:void(0)'">
                     <table>
                         <tbody>
                             <tr>
@@ -92,13 +148,7 @@
                     <input data-dojo-type="dijit/form/TextBox" type="hidden" name="partyTypeEnumId"></input>
                     <input data-dojo-type="dijit/form/TextBox" type="hidden" name="partyId"></input>
                 </div>
-                <div id="postalGridContainer" class="assoc-grid-container">
-                    <div class="assoc-grid-header" >
-                        <div class="assoc-grid-title" style="float: left;">Postal Address</div>
-                        <div id="postalGridAdd" class="assoc-grid-add" style="float: right;">+</div>
-                    </div>
-                    <div class="assoc-grid" data-dojo-attach-point="postalGridNode" ></div>
-                </div>
+                <div id="postalGridContainer" class="assoc-grid-container" data-dojo-attach-point="postalGridNode"></div>
                 <div id="phoneGridContainer" class="assoc-grid-container" >
                     <div class="assoc-grid-header" >
                         <div class="assoc-grid-title" style="float: left;">Phone Number</div>
@@ -138,10 +188,12 @@
                     </div>
                     <div class="assoc-grid" data-dojo-attach-point="assocProductGridNode" ></div>
                 </div>
-                <div data-dojo-type="dijit/form/Button" name="saveDetail" type="button">Save</div>
-            </div>
+                <div data-dojo-type="dijit/form/Button" name="saveDetail"  type="submit">Save</div>
+                <div data-dojo-type="dijit/form/Button" name="cancelDetail" type="button">Cancel</div>
         </div>
-        <div data-dojo-type="dijit.layout.ContentPane" class="dgridmod-center" region="center" >
+        <div data-dojo-type="dijit.layout.ContentPane" class="dgridmod-center" 
+                          data-dojo-attach-point="centerRegion"
+                            region="center" >
             <div data-dojo-type="dijit/Toolbar" class="dgridmod-toolbar" >
                 <div data-dojo-type="dijit/form/CheckBox"></div>
                 <div data-dojo-type="dijit/form/Button" name="queryButton" type="button">Query</div>
@@ -149,5 +201,5 @@
             </div>
             <div data-dojo-attach-point="gridNode"></div>
         </div>
-
+        
 </div>        

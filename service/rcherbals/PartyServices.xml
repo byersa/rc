@@ -14,8 +14,9 @@
 	<service verb="queryParty" type="script" authenticate="false"
 	         location="component://rc/script/rcherbals/party/queryParty.groovy">
 	    <in-parameters>
-	        <parameter name="isPersonType" type="Boolean" required="false" default-value="false"/>
-	        <parameter name="isOrganizationType" type="Boolean" required="false" default-value="false"/>
+	        <!--parameter name="isPersonType" type="Boolean" required="false" default-value="false"/>
+	        <parameter name="isOrganizationType" type="Boolean" required="false" default-value="false"/-->
+	        <parameter name="partyTypeEnumId" required="true"/>
 	        <parameter name="firstName" required="false"/>
 	        <parameter name="lastName" required="false"/>
 	        <parameter name="organizationName" required="false"/>

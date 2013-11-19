@@ -14,10 +14,12 @@ define([
         'dojo/_base/array',
         'dojo/request',
         'dojo/dom-style',
+        'dojo/dom-geometry',
         'dijit/_TemplatedMixin',
         'dijit/_WidgetsInTemplateMixin',
     'dijit/layout/BorderContainer',
     'dojo/text!./templates/PartyTab.html',
+    'rc/widgets/common/AssocWidget',
     'rc/modules/BasicStore',
     'rc/modules/RWStore',
     'dojo/store/Observable',
@@ -34,62 +36,71 @@ define([
     'dijit/form/FilteringSelect',
     'dojox/validate',
     'dojox/validate/web',
+    'dijit/layout/ContentPane',
+    'dijit/_WidgetBase',
     'dijit/Toolbar',
     'dijit/form/CheckBox',
     'dijit/form/Button',
     'dijit/form/Form',
-    'dijit/layout/ContentPane',
     'dijit/form/RadioButton',
     'dijit/Dialog'
 ], function(declare, string, query, registry, lang, on, request, html, dom, domAttr, htmlUtil, JSON, 
-            array, request, domStyle, _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
-            BasicStore, RWStore, Observable, OnDemandGrid, Selection, Keyboard, selector, editor,
-            Memory, ObjectStore, ValidationTextBox, TextBox, Select, FilteringSelect, validate, webValidate
+            array, request, domStyle, domGeometry, _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
+            AssocWidget, BasicStore, RWStore, Observable, OnDemandGrid, Selection, Keyboard, selector, editor,
+            Memory, ObjectStore, ValidationTextBox, TextBox, Select, FilteringSelect, validate, webValidate, ContentPane, WidgetBase
             ) {
                 
     var comboGrid = declare([OnDemandGrid, Selection, Keyboard]);
     
-    var partyTab = declare("rc.widgets.party.PartyTab", [BorderContainer, _TemplatedMixin, _WidgetsInTemplateMixin], {
+    var partyTab = declare("rc.widgets.party.PartyTab", [WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
         
         templateString: template,
         design: 'headline',
-        storeUrl: '',
+        storeUrl: '/party/queryParty',
         store: null,
         idProperty: '',
         detailMode: 'create',
+        liveSplitters: false,
+        gutters: false,
 						
         constructor: function() {
             return;
         },
         
+        buildRendering: function() {
+            this.inherited(arguments);
+            return;
+        },
+       
         postCreate: function() {
             this.inherited(arguments);
             var _this = this;
             var basicStore = new BasicStore({
                 id: this.id + '-store',
-                //target: this.storeUrl,
-                data: [],
+                target: this.storeUrl,
                 idProperty: this.idProperty
                 });
             this.store = new Observable(basicStore);
             
-            this.createContactStores(null);
+            //this.createContactStores(null);
             
             console.log("gridNode: " + this.gridNode);
             this.grid = new comboGrid({store: this.store, columns: this.getMainColumns()}, this.gridNode);
-            var dblClickHndl = this.grid.on(".dgrid-row:dblclick", lang.hitch(this, "handleDblClick"));  
-            console.log("dblClickHndl: " + dblClickHndl);
 
-            this.postalGrid = new comboGrid({store: this.postalStore, subRows: this.getPostalColumns()}, this.postalGridNode);
+            this.postalGrid = new AssocWidget({columnDef: this.getPostalColumns(), assocTitle: "POSTAL ADDRESS", idProperty: "contactMechId"}, this.postalGridNode);
             query("#postalGridAdd").on("click", lang.hitch(_this, "addPostalRow"));
-
             this.phoneGrid = new comboGrid({store: this.phoneStore, columns: this.getPhoneColumns()}, this.phoneGridNode);
             query("#phoneGridAdd").on("click", lang.hitch(_this, "addPhoneRow"));
-
             this.emailGrid = new comboGrid({store: this.emailStore, columns: this.getEmailColumns()}, this.emailGridNode);
+            this.resizeGrids();
+            
             query("#emailGridAdd").on("click", lang.hitch(_this, "addEmailRow"));
             query("input[name=saveDetail]").on("click", lang.hitch(_this, "submitDetailForm"));
+            query("input[name=cancelDetail]").on("click", lang.hitch(_this, "cancelDetailForm"));
             query("input[name=showCreateButton]").on("click", lang.hitch(_this, "showCreateForm"));
+            this.grid.on(".dgrid-row:dblclick", lang.hitch(this, "handleDblClick"));  
+            query("input[name=queryButton]").on("click", lang.hitch(_this, "showQueryForm"));
+            query("input[name=querySubmit]").on("click", lang.hitch(_this, "submitQueryForm"));
             
             var postalPurposeMemoryStore = new Memory({data: [
 							                     { name: "Shipping", id: "PostalShippingDest" },
@@ -105,23 +116,89 @@ define([
             this.grid.startup();
             
             this.postalGrid.startup();
-            this.addPostalRow();
+            //this.addPostalRow();
             
             this.phoneGrid.startup();
-            this.addPhoneRow();
+            //this.addPhoneRow();
             
             this.emailGrid.startup();
-            this.addEmailRow();
+            //this.addEmailRow();
             
-            this.addPartyData();
+            //this.addPartyData();
             return;
         },
         
         showCreateForm: function() {
+            domStyle.set(this.createForm.domNode, "display", "block");
+            domStyle.set(this.editFormPerson.domNode, "display", "none");
+            domStyle.set(this.editFormOrg.domNode, "display", "none");
+            this.displayScreen("bottom");
+            this.detailMode = "create";
+            // var data = {
+            //     phoneData: [{contactNumber: ""}],
+            //     emailData: [{infoString: ""}],
+            //     postalData: [{address1: "", city:""}]
+            // };
+            // this.setContactGrids(data);
             return;
         },
         
-        showEditForm: function(data) {
+        cancelDetailForm: function() {
+            if (this.detailMode == "create") {
+                this.createForm.reset();
+            } else {
+                if (this.currentRow.partyTypeEnumId == "PtyPerson") {
+                    this.editFormPerson.reset();
+                } else {
+                    this.editFormOrg.reset();
+                }
+            }
+            this.displayScreen("center");
+            return;
+        },
+        
+        showQueryForm: function(evt) {
+            this.displayScreen("top");
+            return;
+        },
+        
+        displayScreen: function(region) {
+            if (region == "top") {
+                domStyle.set(this.bottomRegion.domNode, "display", "none");
+                domStyle.set(this.centerRegion.domNode, "display", "none");
+                domStyle.set(this.topRegion.domNode, "display", "block");
+            } else if (region == "bottom") {
+                domStyle.set(this.bottomRegion.domNode, "display", "block");
+                domStyle.set(this.centerRegion.domNode, "display", "none");
+                domStyle.set(this.topRegion.domNode, "display", "none");
+            } else if (region == "center") {
+                domStyle.set(this.bottomRegion.domNode, "display", "none");
+                domStyle.set(this.centerRegion.domNode, "display", "block");
+                domStyle.set(this.topRegion.domNode, "display", "none");
+            }
+            return;
+        },
+        
+        makeBasicStore: function(content, isObservable) {
+            var basicStore = new BasicStore({
+                id: this.id + '-store',
+                target: this.storeUrl,
+                content: content,
+                idProperty: this.idProperty
+                });
+            if (isObservable) {
+                basicStore = new Observable(basicStore);
+            }
+            return basicStore;
+        },
+        
+        submitQueryForm: function(evt) {
+            var cnt = {city: "One%"};
+            var store = this.makeBasicStore(cnt, true);
+            this.grid.setStore(store);
+            domStyle.set(this.bottomRegion.domNode, "display", "none");
+            domStyle.set(this.centerRegion.domNode, "display", "block");
+            domStyle.set(this.topRegion.domNode, "display", "none");
             return;
         },
         
@@ -149,6 +226,13 @@ define([
             return;
         },
         
+        resizeGrids: function() {
+            this.postalGrid.resize();
+            this.emailGrid.resize();
+            this.phoneGrid.resize();
+            return;
+        },
+        
         addPartyData: function() {
             var partyTypeEnumId =  ["PtyPerson", "PtyOrganization"][Math.floor(Math.random() * 2)];
             var firstName =  "First_" + Math.floor(Math.random() * 2000);
@@ -168,6 +252,7 @@ define([
             this.phoneGrid.store.put({
                 contactNumber: Math.floor(Math.random() * 10) + "01-45"  + Math.floor(Math.random() * 10) + "-123" + Math.floor(Math.random() * 10)
                 });
+            this.phoneGrid.resize();
         },
         
         addPostalRow: function(evt) {
@@ -177,12 +262,14 @@ define([
                 city: 'Provo', //["NYC", "Orem", "Pittsburgh", "Mt. Lebanon"][Math.floor(Math.random() * 4)],
                 stateProvinceGeoId: 'USA_PA'
                 });
+            this.postalGrid.resize();
         },
         
         addEmailRow: function(evt) {
             this.emailGrid.store.put({
                 infoString: "email." + Math.round(Math.random() * 1000) + "@nomail.com"
                 });
+            this.emailGrid.resize();
         },
         
         getMainColumns: function() {
@@ -193,58 +280,71 @@ define([
 							{field: 'phoneData', label: 'Phone', sortable: false, formatter: this.phoneDataFormatter},
 							{field: 'postalData', label: 'City', formatter: this.cityFormatter},
 							{field: 'postalData', label: 'State', formatter: this.stateFormatter}
-						];
+					];
 			},
         getPostalColumns: function() {
             return [
                         [
-							editor({field:'address1', label:'Address 1', sortable: true, autoSave: true, 
-							     canEdit: this.canEdit}, TextBox),
-							editor({field:'city', label:'City', sortable: true, autoSave: true, canEdit: this.canEdit}, TextBox),
-							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true,  autoSave: true,
-							        editor: Select,
-							        editorArgs:
-							            {
-							                required: true,
-							                placeholder: "Must select a purpose",
-							                //store: this.postalPurposeStore
-							                options: [
-							                     { label: " - ", value: "" },
-							                     { label: "Shipping", value: "PostalShippingDest" },
-							                     { label: "FOB", value: "PostalShippingOrigin" },
-							                     { label: "Primary", value: "PostalPrimary" }
-							                     ]
-							            }
-							        }),
-							{field:'contactMechId', label:'', rowSpan: 2, sortable: false, formatter: this.formatAddButton}
-						],
-						[
-							editor({field:'address2', label:'Address 2', sortable: true, autoSave: true,
-							     canEdit: this.canEdit}, TextBox),
-							editor({field:'stateProvinceGeoId', label:'State', sortable: true, autoSave: true, 
-							        editorArgs:
-							            {
-							                options: [
-							                     { label: "PA", value: "USA_PA" },
-							                     { label: "UT", value: "USA_UT" }
-							                     ]
-							            }
-							        }, 
-							        Select),
-							editor({field:'postalCode', label:'Zip', sortable: true, autoSave: true, 
-							     canEdit: this.canEdit,
-							        editorArgs:
-							            {
-							                placeholder: '##### or #####-####',
-							                validator: function(value) {
-							                    return validate.isNumberFormat(value, {format: ['#####', '#####-####']});
-							                }
-							            }
-							        }, 
-							        ValidationTextBox)
+							{field:'address1', label:'Address 1', width: "36"},
+						    {field:'address2', label:'Address 2', width: "36"},
+							{field:'city', label:'City', width: "36"},
+						    {field:'stateProvinceGeoId', label:'State', width: "36"},
+						    {field:'postalCode', label:'Zip', width: "36"},
+							{field:'contactMechPurposeId', label:'Purpose', width: "36"}
 						]
 					];
 			},
+			
+//         getPostalColumns: function() {
+//             return [
+//                         [
+// 							editor({field:'address1', label:'Address 1', sortable: true, autoSave: true, 
+// 							     canEdit: this.canEdit}, TextBox),
+// 							editor({field:'city', label:'City', sortable: true, autoSave: true, canEdit: this.canEdit}, TextBox),
+// 							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true,  autoSave: true,
+// 							        editor: Select,
+// 							        editorArgs:
+// 							            {
+// 							                required: true,
+// 							                placeholder: "Must select a purpose",
+// 							                //store: this.postalPurposeStore
+// 							                options: [
+// 							                     { label: " - ", value: "" },
+// 							                     { label: "Shipping", value: "PostalShippingDest" },
+// 							                     { label: "FOB", value: "PostalShippingOrigin" },
+// 							                     { label: "Primary", value: "PostalPrimary" }
+// 							                     ]
+// 							            }
+// 							        }),
+// 							{field:'contactMechId', label:'', rowSpan: 2, sortable: false, formatter: this.formatAddButton}
+// 						],
+// 						[
+// 							editor({field:'address2', label:'Address 2', sortable: true, autoSave: true,
+// 							     canEdit: this.canEdit}, TextBox),
+// 							editor({field:'stateProvinceGeoId', label:'State', sortable: true, autoSave: true, 
+// 							        editorArgs:
+// 							            {
+// 							                options: [
+// 							                     { label: "PA", value: "USA_PA" },
+// 							                     { label: "UT", value: "USA_UT" }
+// 							                     ]
+// 							            }
+// 							        }, 
+// 							        Select),
+// 							editor({field:'postalCode', label:'Zip', sortable: true, autoSave: true, 
+// 							     canEdit: this.canEdit,
+// 							        editorArgs:
+// 							            {
+// 							                placeholder: '##### or #####-####',
+// 							                validator: function(value) {
+// 							                    return validate.isNumberFormat(value, {format: ['#####', '#####-####']});
+// 							                }
+// 							            }
+// 							        }, 
+// 							        ValidationTextBox)
+// 						]
+// 					];
+// 			},
 		
 		canEdit: function(object, value) { if (object.thruDate) {return false; } else {return true;}},
 		
@@ -304,11 +404,25 @@ define([
             this.store = aStore;
         },
         
+        showEditForm: function(data) {
+            domStyle.set(this.createForm.domNode, "display", "none");
+            if(data.partyTypeEnumId == "PtyPerson") {
+                domStyle.set(this.editFormPerson.domNode, "display", "block");
+                domStyle.set(this.editFormOrg.domNode, "display", "none");
+            } else {
+                domStyle.set(this.editFormPerson.domNode, "display", "none");
+                domStyle.set(this.editFormOrg.domNode, "display", "block");
+            }
+            this.displayScreen("bottom");
+            return;
+        },
+        
         handleDblClick: function(evt) {
             var row = this.grid.row(evt);
+            this.showEditForm(row);
             this.detailMode = 'edit';
-            if(this.origEdit) {
-                if (!agutils.isEqual(this.origEdit, row)) {
+            if(this.currentRow) {
+                if (!agutils.isEqual(this.currentRow, row)) {
                     this.handleDirty("Edit", function() {
                         this.setEditFormData(row.data);
                     });
@@ -316,21 +430,26 @@ define([
             } else {
                 this.setEditFormData(row.data);
             }
+            this.currentRow = row.data;
             return;
         },
         
         setEditFormData: function(data) {
             if (data.partyTypeEnumId == 'PtyPerson') {
-                this.editForm.set("value", {lastName: data.lastName, middleName: data.middleName, firstName: data.firstName, partyTypeEnumId: data.partyTypeEnumId, partyId: data.partyId});
+                this.editFormPerson.set("value", {lastName: data.lastName, middleName: data.middleName, firstName: data.firstName, partyTypeEnumId: data.partyTypeEnumId, partyId: data.partyId});
             } else {
-                this.editForm.set("value", {organizationName: data.organizationName, partyTypeEnumId: data.partyTypeEnumId, partyId: data.partyId});
+                this.editFormOrg.set("value", {organizationName: data.organizationName, partyTypeEnumId: data.partyTypeEnumId, partyId: data.partyId});
             }
-            domStyle.set(this.createForm.domNode, "display", "none");
-            domStyle.set(this.editForm.domNode, "display", "block");
-            
+            this.setContactGrids(data);
+            return;
+        },
+        
+        setContactGrids: function(data) {
             this.createContactStores(data);
             this.setContactStores(data);
-            this.detailMode = 'edit';
+            this.postalGrid.resize();
+            this.phoneGrid.resize();
+            this.emailGrid.resize();
             return;
         },
         
@@ -409,7 +528,8 @@ define([
         submitDetailForm: function(evt) {
             
             var _this = this;
-            window.setTimeout(function() {
+            // this setTimeout is needed to capture the entered values in the dgrid editor fields
+            window.setTimeout( function() {
                 _this.postalGrid.save();
                 _this.phoneGrid.save();
                 _this.emailGrid.save();
@@ -444,12 +564,12 @@ define([
                     }
                     return row;
                 }, _this);
-                submitValues["postalData"] = _this.postalGrid.store.data;
-                submitValues["emailData"] = _this.emailGrid.store.data;
-                submitValues["phoneData"] = _this.phoneGrid.store.data;
+                submitValues["postalData"] = JSON.stringify(_this.postalGrid.store.data);
+                submitValues["emailData"] = JSON.stringify(_this.emailGrid.store.data);
+                submitValues["phoneData"] = JSON.stringify(_this.phoneGrid.store.data);
                 var submitValuesStr = encodeURI(JSON.stringify(submitValues));
                 var xhrDeferred = request(postUrl,{
-                    data: {data: submitValuesStr},
+                    data: submitValues,
                     handleAs: "json",
                     method: "POST",
                     timeout: 10000
@@ -464,6 +584,10 @@ define([
                 });
                 return;
             }, 50);
+            return;
+        },
+      
+        eof: function() {
             return;
         }
 

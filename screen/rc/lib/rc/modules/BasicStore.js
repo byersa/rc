@@ -11,6 +11,7 @@ return declare("rc.modules.BasicStore", Memory, {
     isLoading: false,
     dataDeferred: null,
     target: "",
+    content: null,
     accepts: "application/javascript, application/json", 
     
     
@@ -31,6 +32,7 @@ return declare("rc.modules.BasicStore", Memory, {
             this.dataDeferred = xhr("POST", {
                 url: this.target,
                 handleAs: "json",
+                content: this.content,
                 headers: headers
             });
         } else {
