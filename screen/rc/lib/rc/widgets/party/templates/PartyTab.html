@@ -147,39 +147,37 @@
                     </table>
                     <input data-dojo-type="dijit/form/TextBox" type="hidden" name="partyTypeEnumId"></input>
                     <input data-dojo-type="dijit/form/TextBox" type="hidden" name="partyId"></input>
+                    <input data-dojo-type="dijit/form/TextBox" type="hidden" name="fromDate"></input>
+                    <input data-dojo-type="dijit/form/TextBox" type="hidden" name="thruDate"></input>
                 </div>
-                <div id="postalGridContainer" class="assoc-grid-container" data-dojo-attach-point="postalGridNode"></div>
-                <div id="phoneGridContainer" class="assoc-grid-container" >
-                    <div class="assoc-grid-header" >
-                        <div class="assoc-grid-title" style="float: left;">Phone Number</div>
-                        <div id="phoneGridAdd" class="assoc-grid-add" style="float: right;">+</div>
-                    </div>
-                    <div class="assoc-grid" data-dojo-attach-point="phoneGridNode" ></div>
-                </div>
+                    <table>
+                        <tbody>
+                            <tr>
+                            <td colspan="3">
+                                <div id="postalGridContainer" class="assoc-grid-container" data-dojo-attach-point="postalGridNode"></div>
+                            </td>
+                            </tr>
+                            <tr>
+                            <td>
+                                <div id="phoneGridContainer" class="assoc-grid-container" data-dojo-attach-point="phoneGridNode"></div>
+                            </td>
+                            <td>
+                                <div id="emailGridContainer" class="assoc-grid-container" data-dojo-attach-point="emailGridNode"></div>
+                            </td>
+                            <td>
+                                <div id="webGridContainer" class="assoc-grid-container" data-dojo-attach-point="webGridNode"></div>
+                            </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 
-                <div id="emailGridContainer" class="assoc-grid-container" >
-                    <div class="assoc-grid-header" >
-                        <div class="assoc-grid-title" style="float: left;">Email Address</div>
-                        <div id="emailGridAdd" class="assoc-grid-add" style="float: right;">+</div>
-                    </div>
-                    <div class="assoc-grid" data-dojo-attach-point="emailGridNode" ></div>
-                </div>
-                
-                <div id="webGridContainer" class="assoc-grid-container" >
-                    <div class="assoc-grid-header" >
-                        <div class="assoc-grid-title" style="float: left;">Web Address</div>
-                        <div id="webGridAdd" class="assoc-grid-add" style="float: right;">+</div>
-                    </div>
-                    <div class="assoc-grid" data-dojo-attach-point="webGridNode" ></div>
-                </div>
-                
-                <div id="assocPartyGridContainer" class="assoc-grid-container" >
+                <!--div id="assocPartyGridContainer" class="assoc-grid-container" >
                     <div class="assoc-grid-header" >
                         <div class="assoc-grid-title" style="float: left;">Associations</div>
                         <div id="assocPartyGridAdd" class="assoc-grid-add" style="float: right;">+</div>
                     </div>
                     <div class="assoc-grid" data-dojo-attach-point="assocPartyGridNode" ></div>
-                </div>
+                </div-->
                 
                 <div id="assocProductGridContainer" class="assoc-grid-container" >
                     <div class="assoc-grid-header" >
@@ -199,7 +197,7 @@
                 <div data-dojo-type="dijit/form/Button" name="queryButton" type="button">Query</div>
                 <div data-dojo-type="dijit/form/Button" name="showCreateButton" type="button">Create</div>
             </div>
-            <div data-dojo-attach-point="gridNode"></div>
+            <div data-dojo-attach-point="gridNode" style="width:100%;"></div>
         </div>
         
 </div>        

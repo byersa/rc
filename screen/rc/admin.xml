@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<screen xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/xml-screen-1.1.xsd"
+        standalone="true" begin-transaction="false" 
+        default-menu-include="false" require-authentication="false">
+
+    <transition name="queryResellers">
+      <actions>
+        <service-call name="rcherbals.PartyServices.queryResellers" in-map="ec.web.parameters"
+                      out-map="spOut" web-send-json-response="false">
+        </service-call>
+      </actions>
+      <default-response type="none"/>
+    </transition>
+    <transition name="geocodeResellers">
+      <actions>
+        <service-call name="rcherbals.PartyServices.geocodeResellers" in-map="ec.web.parameters"
+                      out-map="spOut" web-send-json-response="false">
+            <field-map field-name="offset" type="Integer" value="400"/>
+            <field-map field-name="limit" type="Integer" value="100"/>
+        </service-call>
+      </actions>
+      <default-response type="none"/>
+    </transition>
+    <transition name="indexResellers">
+      <actions>
+        <service-call name="rcherbals.PartyServices.indexResellers" in-map="ec.web.parameters"
+                      out-map="spOut" web-send-json-response="false">
+        </service-call>
+      </actions>
+      <default-response type="none"/>
+    </transition>
+    <widgets>
+
+    </widgets>
+</screen>

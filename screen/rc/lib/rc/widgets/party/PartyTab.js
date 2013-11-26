@@ -15,6 +15,9 @@ define([
         'dojo/request',
         'dojo/dom-style',
         'dojo/dom-geometry',
+        'dojo/dom-construct',
+        'dojo/when',
+        "dojo/_base/Deferred",
         'dijit/_TemplatedMixin',
         'dijit/_WidgetsInTemplateMixin',
     'dijit/layout/BorderContainer',
@@ -29,7 +32,7 @@ define([
         'dgrid/selector',
         'dgrid/editor',
         'dojo/store/Memory',
-        'dojo/data/ObjectStore',
+        'dojo/store/JsonRest',
     'dijit/form/ValidationTextBox',
     'dijit/form/TextBox',
     'dijit/form/Select',
@@ -45,9 +48,9 @@ define([
     'dijit/form/RadioButton',
     'dijit/Dialog'
 ], function(declare, string, query, registry, lang, on, request, html, dom, domAttr, htmlUtil, JSON, 
-            array, request, domStyle, domGeometry, _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
+            array, request, domStyle, domGeometry, domConstruct, when, Deferred, _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
             AssocWidget, BasicStore, RWStore, Observable, OnDemandGrid, Selection, Keyboard, selector, editor,
-            Memory, ObjectStore, ValidationTextBox, TextBox, Select, FilteringSelect, validate, webValidate, ContentPane, WidgetBase
+            Memory, JsonRest, ValidationTextBox, TextBox, Select, FilteringSelect, validate, webValidate, ContentPane, WidgetBase
             ) {
                 
     var comboGrid = declare([OnDemandGrid, Selection, Keyboard]);
@@ -82,16 +85,50 @@ define([
                 });
             this.store = new Observable(basicStore);
             
+                this.postalPurposeStore = new Memory({idProperty: "id",
+                        id: "postalPurposeStore",
+                        data: [
+    	                     { name: "Shipping", id: "PostalShippingDest" },
+    	                     { name: "FOB", id: "PostalShippingOrigin" },
+    	                     { name: "Primary", id: "PostalPrimary" }
+                        ]});
+                registry.add(this.postalPurposeStore);
+                this.emailPurposeStore = new Memory({idProperty: "id",
+                        id: "emailPurposeStore",
+                        data: [
+                             { name: "Primary", id: "EmailPrimary" },
+                             { name: "Support", id: "EmailSupport" }
+                        ]});
+                registry.add(this.emailPurposeStore);
+                this.phonePurposeStore = new Memory({idProperty: "id",
+                        id: "phonePurposeStore",
+                        data: [
+	                     { name: "Primary", id: "PhonePrimary" },
+	                     { name: "Fax", id: "PhoneFax" }
+                        ]});
+                registry.add(this.phonePurposeStore);
             //this.createContactStores(null);
+                this.stateStore = new BasicStore({idProperty: "geoId",
+                        id: "stateStore",
+                        target: "party/getStateLookup"
+                        });
+                registry.add(this.stateStore);
             
             console.log("gridNode: " + this.gridNode);
             this.grid = new comboGrid({store: this.store, columns: this.getMainColumns()}, this.gridNode);
 
-            this.postalGrid = new AssocWidget({columnDef: this.getPostalColumns(), assocTitle: "POSTAL ADDRESS", idProperty: "contactMechId"}, this.postalGridNode);
-            query("#postalGridAdd").on("click", lang.hitch(_this, "addPostalRow"));
-            this.phoneGrid = new comboGrid({store: this.phoneStore, columns: this.getPhoneColumns()}, this.phoneGridNode);
-            query("#phoneGridAdd").on("click", lang.hitch(_this, "addPhoneRow"));
-            this.emailGrid = new comboGrid({store: this.emailStore, columns: this.getEmailColumns()}, this.emailGridNode);
+            this.postalGrid = new AssocWidget({columnDef: this.getPostalColumns(), assocTitle: "POSTAL ADDRESS",
+                                idProperty: "contactMechId"}, this.postalGridNode);
+            
+            this.phoneGrid = new AssocWidget({columnDef: this.getPhoneColumns(), assocTitle: "PHONE NUMBER",
+                                idProperty: "contactMechId"}, this.phoneGridNode);
+            
+            this.emailGrid = new AssocWidget({columnDef: this.getEmailColumns(), assocTitle: "EMAIL ADDRESS",
+                                idProperty: "contactMechId"}, this.emailGridNode);
+            
+            this.webGrid = new AssocWidget({columnDef: this.getWebColumns(), assocTitle: "WEB SITE",
+                                idProperty: "contactMechId"}, this.webGridNode);
+            
             this.resizeGrids();
             
             query("#emailGridAdd").on("click", lang.hitch(_this, "addEmailRow"));
@@ -102,12 +139,6 @@ define([
             query("input[name=queryButton]").on("click", lang.hitch(_this, "showQueryForm"));
             query("input[name=querySubmit]").on("click", lang.hitch(_this, "submitQueryForm"));
             
-            var postalPurposeMemoryStore = new Memory({data: [
-							                     { name: "Shipping", id: "PostalShippingDest" },
-							                     { name: "FOB", id: "PostalShippingOrigin" },
-							                     { name: "Primary", id: "PostalPrimary" }
-                ]});
-            this.postalPurposeStore =   new ObjectStore({ objectStore: postalPurposeMemoryStore });
             return;
         },
         
@@ -279,7 +310,7 @@ define([
 							{field: 'emailData', label: 'Email', sortable: false, formatter: this.emailDataFormatter},
 							{field: 'phoneData', label: 'Phone', sortable: false, formatter: this.phoneDataFormatter},
 							{field: 'postalData', label: 'City', formatter: this.cityFormatter},
-							{field: 'postalData', label: 'State', formatter: this.stateFormatter}
+							{field: 'postalData', label: 'State', renderCell: lang.hitch(this, "stateRenderer")}
 					];
 			},
         getPostalColumns: function() {
@@ -288,9 +319,36 @@ define([
 							{field:'address1', label:'Address 1', width: "36"},
 						    {field:'address2', label:'Address 2', width: "36"},
 							{field:'city', label:'City', width: "36"},
-						    {field:'stateProvinceGeoId', label:'State', width: "36"},
+						    {field:'stateProvinceGeoId', label:'State', control: "select", storeId: "stateStore",labelAttr: "geoName", renderCell: lang.hitch(this, "stateFormatter"), width: "36"},
 						    {field:'postalCode', label:'Zip', width: "36"},
-							{field:'contactMechPurposeId', label:'Purpose', width: "36"}
+							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "postalPurposeStore", labelAttr: "name", width: "36"}
+						]
+					];
+			},
+			
+        getPhoneColumns: function() {
+            return [
+                        [
+							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "phonePurposeStore",labelAttr: "name", width: "36"},
+						    {field:'contactNumber', label:'Phone Number', width: "36"}
+						]
+					];
+			},
+			
+        getWebColumns: function() {
+            return [
+                        [
+							{field:'contactMechPurposeId', label:'Purpose', width: "36"},
+						    {field:'infoString', label:'Email', width: "36"}
+						]
+					];
+			},
+			
+        getEmailColumns: function() {
+            return [
+                        [
+							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "emailPurposeStore", labelAttr: "name", width: "36"},
+						    {field:'infoString', label:'Email', width: "36"}
 						]
 					];
 			},
@@ -346,55 +404,55 @@ define([
 // 					];
 // 			},
 		
-		canEdit: function(object, value) { if (object.thruDate) {return false; } else {return true;}},
+// 		canEdit: function(object, value) { if (object.thruDate) {return false; } else {return true;}},
 		
-        getPhoneColumns: function() {
-            return [
-							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true,  autoSave: true,
-							        editorArgs:
-							            {
-							                options: [
-							                     { label: "Primary", value: "PhonePrimary" },
-							                     { label: "Fax", value: "PhoneFax" }
-							                     ]
-							            }
-							        }, 
-							        Select),
-							editor({field:'contactNumber', label:'Number', sortable: true, autoSave: true, 
-							        editorArgs:
-							            {
-							                placeholder: '###-###-####',
-							                validator: function(value) {
-							                    return validate.isNumberFormat(value, {format: ['###-###-####']});
-							                }
-							            }
-							        }, 
-							        ValidationTextBox)
-					];
-			},
+//         getPhoneColumns: function() {
+//             return [
+// 							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true,  autoSave: true,
+// 							        editorArgs:
+// 							            {
+// 							                options: [
+// 							                     { label: "Primary", value: "PhonePrimary" },
+// 							                     { label: "Fax", value: "PhoneFax" }
+// 							                     ]
+// 							            }
+// 							        }, 
+// 							        Select),
+// 							editor({field:'contactNumber', label:'Number', sortable: true, autoSave: true, 
+// 							        editorArgs:
+// 							            {
+// 							                placeholder: '###-###-####',
+// 							                validator: function(value) {
+// 							                    return validate.isNumberFormat(value, {format: ['###-###-####']});
+// 							                }
+// 							            }
+// 							        }, 
+// 							        ValidationTextBox)
+// 					];
+// 			},
 			
-        getEmailColumns: function() {
-            return [
-							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true, autoSave: true, 
-							        editorArgs:
-							            {
-							                options: [
-							                     { label: "Primary", value: "EmailPrimary" },
-							                     { label: "Support", value: "EmailSupport" }
-							                     ]
-							            }
-							        }, 
-							        Select),
-							editor({field:'infoString', label:'Email', sortable: true, autoSave: true, 
-							        editorArgs:{
-							                placeholder: 'email address',
-							                validator: function(value) {
-							                    return webValidate.isEmailAddress(value);
-							                }
-							        }}, 
-							        ValidationTextBox)
-					];
-			},
+//         getEmailColumns: function() {
+//             return [
+// 							editor({field:'contactMechPurposeId', label:'Purpose', sortable: true, autoSave: true, 
+// 							        editorArgs:
+// 							            {
+// 							                options: [
+// 							                     { label: "Primary", value: "EmailPrimary" },
+// 							                     { label: "Support", value: "EmailSupport" }
+// 							                     ]
+// 							            }
+// 							        }, 
+// 							        Select),
+// 							editor({field:'infoString', label:'Email', sortable: true, autoSave: true, 
+// 							        editorArgs:{
+// 							                placeholder: 'email address',
+// 							                validator: function(value) {
+// 							                    return webValidate.isEmailAddress(value);
+// 							                }
+// 							        }}, 
+// 							        ValidationTextBox)
+// 					];
+// 			},
 			
         getStore: function() {
             return this.store;
@@ -513,10 +571,23 @@ define([
         },
         
         stateFormatter: function(value, object) {
+            return value;
+        },
+        
+        stateRenderer: function(value, object, td, options) {
             var returnVal = "";
-            if (dojo.isArray(value) && value.length) {
-                var postalRow = value[0];
-                returnVal = postalRow.stateProvinceGeoId;
+            var postalData = value.postalData;
+            if (postalData && dojo.isArray(postalData) && postalData.length) {
+                var postalRow = postalData[0];
+                var stateId = postalRow.stateProvinceGeoId;
+                var deferredRow = new Deferred();
+                var stateRow = this.stateStore.get(stateId);
+                when(stateRow, function(row) {
+                    //deferredRow.resolve( row.geoCodeAlpha2);
+                    var tnode = dojo.doc.createTextNode(row.geoCodeAlpha2);
+                    domConstruct.place(tnode, td);
+                });
+                return null;
             }
             return returnVal;
         },
@@ -587,6 +658,17 @@ define([
             return;
         },
       
+        onResize: function(evt) {
+            return;
+        },
+        
+        resize: function(dim) {
+            this.inherited(arguments);
+            domGeometry.setMarginBox(this.grid.domNode, dim);
+            this.grid.resize();
+            return;
+        },
+        
         eof: function() {
             return;
         }

@@ -1,5 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-1.2.xsd">
+	<service verb="queryResellers" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/party/queryResellers.groovy">
+	    <in-parameters>
+	        <parameter name="city" required="false"/>
+	        <parameter name="state" required="false"/>
+	        <parameter name="postalCode" required="false"/>
+	        <parameter name="productIds" type="List" required="false"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="items" type="List" required="true"/>
+	    </out-parameters>
+	</service>
+	<service verb="geocodeResellers" type="script" authenticate="false" transaction-timeout="300" transaction="ignore"
+	         location="component://rc/script/rcherbals/party/geocodeResellers.groovy">
+	    <in-parameters>
+	        <parameter name="offset" type="Integer" required="false" default-value="0"/>
+	        <parameter name="limit" type="Integer" required="false" default-value="1000"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="uncodedResellers" type="List" required="false"/>
+	    </out-parameters>
+	</service>
+	<service verb="indexResellers" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/party/indexResellers.groovy">
+	    <in-parameters>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="unindexedResellers" type="List" required="false"/>
+	    </out-parameters>
+	</service>
 	<service verb="getPartyList" type="script" authenticate="false"
 	         location="component://rc/script/rcherbals/party/getPartyList.groovy">
 	    <in-parameters>

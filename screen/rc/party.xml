@@ -5,8 +5,13 @@
         default-menu-include="false" require-authentication="false">
 
     <transition name="addNewParty">
-        <service-call name="rcherbals.PartyServices.storeParty" in-map="ec.web.parameters"
-                      web-send-json-response="true">
+        <service-call name="rcherbals.PartyServices.storeParty" in-map="ec.web.parameters" web-send-json-response="true">
+        </service-call>
+      <default-response type="none"/>
+    </transition>
+    
+    <transition name="getLocalResellers">
+        <service-call name="rcherbals.PartyServices.queryResellers" in-map="ec.web.parameters" web-send-json-response="true">
         </service-call>
       <default-response type="none"/>
     </transition>
@@ -29,6 +34,30 @@
             </service-call>
             <script><![CDATA[
                 ec.web.sendJsonResponse(updatedData)
+            ]]></script>
+        </actions>
+      <default-response type="none"/>
+    </transition>
+    <transition name="getStateLookup">
+        <actions>
+            <script><![CDATA[
+            import org.moqui.entity.EntityCondition
+
+            ec.artifactExecution.disableAuthz()            
+            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("getStateLookup")
+            logger.info("in getStateLookup, data: ${ec.web.parameters}")
+            List states = ec.entity.makeFind("Geo").condition("geoId", EntityCondition.LIKE, 'USA_%').list()
+            //def edv = ef.makeEntityDynamicView()
+            //def ecf = ec.entity.getConditionFactory()
+            //edv.addMemberEntity("GEOASSOC", "GeoAssoc", null, null, null)
+            //edv.addAliasAll("GEOASSOC", null)
+            //edv.addMemberEntity("GEO", "Geo", "GEOASSOC", null, ['toGeoId':'geoId'])
+            //edv.addAliasAll("GEO", 'g')
+            //def cond = ecf.makeCondition("geoId", EntityCondition.EQUALS, 'USA')
+            //ef.condition(cond).selectFields(['gGeoId', 'gGeoCodeAlpha2', 'gGeoName'])
+            //List states = ef.list()
+            logger.info("in getStateLookup, states: ${states}")
+                ec.web.sendJsonResponse(states)
             ]]></script>
         </actions>
       <default-response type="none"/>

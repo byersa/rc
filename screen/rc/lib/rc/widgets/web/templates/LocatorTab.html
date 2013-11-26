@@ -1,0 +1,95 @@
+<div class="locator-container" 
+    style="height:inherit;"
+>
+    <div class="locator-menu-container"
+        style="width:100%; height: 24px; border: 1px solid green;"
+        >
+        <div class="locator-drop-down" 
+            data-dojo-type="dijit/form/DropDownButton"
+            data-dojo-props="label: 'Locate Store'"
+            data-dojo-attach-point="locatorDropDown"
+        >
+    <div id="locatorDropDownDialog" data-dojo-type="dijit/TooltipDialog"
+        data-dojo-attach-point="dropDownDialog">
+        <div data-dojo-type="dijit/form/Form" 
+            data-dojo-props="action: 'javascript:void(0)'"
+            data-dojo-attach-point="locatorForm">
+                <table>
+                    <tbody>
+                        <tr>
+                            <th>City</th><th><div data-dojo-type="dijit/form/TextBox" name="city"></div></th>
+                            <th>State</th><th><div data-dojo-type="dijit/form/TextBox" name="stateProvinceGeoId"></div></th>
+                            <th>OR</th>
+                            <th>Zipcode</th><th><div data-dojo-type="dijit/form/TextBox" name="postalCode"></div></th>
+                            <th><button data-dojo-type="dijit/form/Button" name="locatorSubmit" type="submit"
+                                data-dojo-attach-point="locatorSubmit">Search</button></th>
+                        </tr>
+                    </tbody>
+                </table>
+                <table>
+                    <tbody>
+                        <tr>
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP119" ></div></th><th class="product-name">AsthmaClear </th>                    
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP125" ></div></th><th class="product-name">Blood Sugar Balance </th>            
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP134" ></div></th><th class="product-name">ClearLungs </th>
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP161" ></div></th><th class="product-name">DreamOn </th>                        
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP168" ></div></th><th class="product-name">KidneyAid </th>                      
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP172" ></div></th><th class="product-name">LiverClean </th>                     
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP181" ></div></th><th class="product-name">ProstEase </th>                      
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP191" ></div></th><th class="product-name">Thyroid Thrive </th>                 
+                        </tr>
+                        <tr>
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP196" ></div></th><th class="product-name">VisionAid </th>                      
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP199" ></div></th><th class="product-name">Water-X </th>                        
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP305" ></div></th><th class="product-name">Hair ReVive </th>                    
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP306" ></div></th><th class="product-name">Nail ReVive </th>                    
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP307" ></div></th><th class="product-name">Skin ReVive </th>                    
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP310" ></div></th><th class="product-name">Adrenal Fatigue Fighter </th>        
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP320" ></div></th><th class="product-name">Anxiety Free </th>                   
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP325" ></div></th><th class="product-name">UTIntensive </th>                    
+                        </tr>
+                        <tr>
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP340" ></div></th><th class="product-name">Fibro Relief </th>                   
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP350" ></div></th><th class="product-name">Arthritis Relief </th>               
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP360" ></div></th><th class="product-name">TMJ Relief </th>                     
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP380" ></div></th><th class="product-name">Hunger-X </th>                       
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP549" ></div></th><th class="product-name">Blood Pressure Formula </th>         
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP562" ></div></th><th class="product-name">Migraine Relief </th>                
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="RCP587" ></div></th><th class="product-name">SinusClear </th>           
+                        <th><div data-dojo-type="dijit/form/CheckBox" name="NOOP" ></div></th><th class="product-name"> </th>           
+                    </tr>
+                </tbody>
+            </table>
+            
+        </div>
+    </div>
+        </div>
+    </div>
+    <div data-dojo-type="dijit/layout/BorderContainer"
+        data-dojo-props="design:'sidebar', liveSplitters:false"
+        data-dojo-attach-point="bContainer"
+        style="width:100%; height:600px; overflow-y:auto; border: 1px solid black;"
+    >
+        <div data-dojo-type="dijit/layout/ContentPane"
+            data-dojo-props="region:'left'"
+            data-dojo-attach-point="leftRegion"
+            style="width:500px; height:100%; border: none;"
+        >
+            <div class="internal-header2">Here are the resellers available in the target area:</div>
+            <div data-dojo-attach-point="locatorMatchGridDiv"></div>
+        </div>
+        <div class="locator-form" data-dojo-attach-point="formDiv"
+             data-dojo-type="dijit/layout/ContentPane"
+            data-dojo-props="region:'center'"
+            style="border: none;"
+        >
+        </div>
+        <div class="locator-map2" data-dojo-attach-point="mapRegion"
+             data-dojo-type="dijit/layout/ContentPane"
+            data-dojo-props="region:'right'"
+            style="width: 600px; border: none;"
+        >
+            <div id="rcMap" class="locator-map" data-dojo-attach-point="mapDiv"></div>
+        </div>
+    </div>
+</div>
