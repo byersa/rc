@@ -8,10 +8,12 @@ define([
         'dojo/query',
         'dojo/on',
         'dojo/request',
+        'dojo/json',
         'dojo/Deferred',
         'dijit/_WidgetBase',
         'dijit/_TemplatedMixin',
         'dijit/_WidgetsInTemplateMixin',
+        'dijit/form/Select',
         'dojo/store/Observable',
         'dgrid/OnDemandGrid',
         'dgrid/Selection',
@@ -26,7 +28,6 @@ define([
         'dijit/layout/ContentPane',
         'dijit/form/ValidationTextBox',
         'dijit/form/TextBox',
-        'dijit/form/Select',
         'dijit/form/Button',
         'dijit/form/FilteringSelect',
         'dijit/form/DropDownButton',
@@ -34,19 +35,23 @@ define([
         'dijit/form/Form'
 
         ], function(declare, string, lang, domStyle, domConstruct, registry, query, on, request,
-                Deferred, WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
+                JSON, Deferred, WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin, Select,
               Observable, OnDemandGrid, Selection, Keyboard, selector,
               Memory, ObjectStore,
               //ValidationTextBox, TextBox, Select, Button, FilteringSelect, Form,
               validate, validateWeb, template
         ) {
             
-       var comboGrid = declare([OnDemandGrid, Selection, Keyboard]);     
+       var comboGrid = declare([OnDemandGrid, Selection, Keyboard]);  
+       var ZOOM_SIZE = 9; 
+       var LOCATE_DISTANCE = 50; 
        
        var wid = declare("rc.widgets.web.LocatorTab", [WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
            
            templateString: template,
            map: null,
+           markers: null,
+           infoWindows: null,
            
            buildRendering: function() {
                this.inherited(arguments);
@@ -57,15 +62,19 @@ define([
                this.inherited(arguments);
                var _this = this;
                this.bContainer.startup();
-                // this.map = new Map("rcMap", {
-                //     baseLayerType : dojox.geo.openlayers.BaseLayerType.GOOGLE
-                // });
-                // this.map.fitTo([ -160, 70, 160, -70 ]);
                 this.matchStore = new Observable(new Memory({idProperty:'partyId', data: null}));
                 this.matchGrid = new comboGrid({store: this.matchStore, subRows: this.getMatchColumns(), showHeader: false}, this.locatorMatchGridDiv);
                 this.matchGrid.startup();
                 //query("input[name=locatorSubmit]", this.domNode).on("click", lang.hitch(_this, "submitLocatorForm"));
                 this.locatorSubmit.on("click", lang.hitch(_this, "submitLocatorForm"));
+                var stateStore = registry.byId("stateStore");
+                var cntrl = new Select({
+                               name: "stateProvinceGeoId",
+                               label: "State",
+                               labelAttr: "geoName",
+                               store: stateStore
+                           });
+                domConstruct.place(cntrl.domNode, this.locatorSelect);
                 return;
             },
            
@@ -75,7 +84,7 @@ define([
                 var mapOptions = {
                     center: ctr,
                     mapTypeId: google.maps.MapTypeId.ROADMAP,
-                    zoom: 12
+                    zoom: ZOOM_SIZE
                 };
                 this.map = new google.maps.Map(this.mapDiv,
                     mapOptions);   
@@ -109,12 +118,33 @@ define([
            }, 
            
            addMarkers: function(map, data) {
+               this.markers = {};
+               this.infoWindows = {};
+               
                dojo.forEach(data, function(row) {
                 var marker = new google.maps.Marker({
                     position: new google.maps.LatLng(row.latitude, row.longitude),
                     map: map,
                     title: row.organizationName
-                });                
+                });             
+                this.markers[row.partyId] = marker;
+                var postalRow = (row.postalData && row.postalData.length) ? row.postalData[0] : {};
+                var emailRow = (row.emailData && row.emailData.length) ? row.emailData[0] : {infoString: 'N/A'};
+                var phoneRow = (row.phoneData && row.phoneData.length) ? row.phoneData[0] : {contactNumber: 'N/A'};
+
+                var contentString = '<div class="infowindow">'
+                    + '<b>' + row.organizationName + '</b><br/>'
+                    + postalRow.address1 + '<br/>'
+                    + postalRow.city + ', ' + postalRow.stateProvinceGeoId.substring(4) + ' ' + postalRow.postalCode + '<br/>'
+                    + phoneRow.contactNumber + ' - ' + emailRow.infoString
+                    ;
+
+                var infoWindow = new google.maps.InfoWindow({
+                    content: contentString
+                });
+                google.maps.event.addListener(marker, 'click', function() {
+                    infoWindow.open(this.map,marker);
+                });
                }, this);
                return;
            },
@@ -150,7 +180,7 @@ define([
 						    {field:'phoneData', colSpan:"2", formatter: lang.hitch(this, "phoneDataFormatter")}
 						],
 						[
-							{field:'partyId', colSpan:"4"}
+							{field:'partyId', colSpan:"4", formatter: lang.hitch(this, "partyFormatter")}
 						]
 					];
            },
@@ -161,15 +191,23 @@ define([
            submitLocatorForm: function() {
                 var _this = this;
                 var values = this.locatorForm.get("value");
+                var productValues = this.locatorProductForm.get("value");
                 var queryContent = {}
                 if (values.postalCode) {
                     queryContent.postalCode = values.postalCode;
-                } else {
-                    if (values.stateProvinceGeoId) {
+                }
+                if (values.stateProvinceGeoId) {
                         queryContent.state = values.stateProvinceGeoId.substring(4);
                         queryContent.city = values.city;
+                }
+                var productIds = [];
+                for (var prodId in productValues) {
+                    if(productValues[prodId].length) {
+                        productIds.push(prodId);
                     }
                 }
+                queryContent.productIdList = JSON.stringify(productIds);
+                queryContent.distance = LOCATE_DISTANCE;
                 var xhrDeferred = request("party/getLocalResellers",{
                     data: queryContent,
                     handleAs: "json",
@@ -181,6 +219,7 @@ define([
                     _this.makeMap(data.items);
                     return;
                 });
+                _this.locatorDropDown.closeDropDown();
                return;
            },
            
@@ -218,6 +257,11 @@ define([
                 var postalRow = value[0];
                 returnVal = postalRow.address1 + " " + postalRow.address2;
             }
+            return returnVal;
+        },
+        
+        partyFormatter: function(value, object) {
+            var returnVal = "&nbsp;";
             return returnVal;
         },
         

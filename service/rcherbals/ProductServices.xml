@@ -1,25 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-1.2.xsd">
-	<service verb="getProductList" type="script" authenticate="false"
-	         location="component://rc/script/rcherbals/product/getProductList.groovy">
-	    <in-parameters>
-	        <parameter name="productName" required="false"/>
-	    </in-parameters>
-	    <out-parameters>
-	        <parameter name="items" type="List" required="true"/>
-	    </out-parameters>
-	</service>
 	<service verb="queryProduct" type="script" authenticate="false"
 	         location="component://rc/script/rcherbals/product/queryProduct.groovy">
 	    <in-parameters>
-	        <parameter name="productTypeEnumId" required="false"/>
+	        <parameter name="partyId" required="false"/>
 	        <parameter name="productName" required="false"/>
 	    </in-parameters>
 	    <out-parameters>
 	        <parameter name="items" type="List" required="true"/>
 	    </out-parameters>
 	</service>
-
+<!--
     <service verb="storeProductAndCost" type="inline" authenticate="false">
         <in-parameters>
             <parameter name="productId" required="false"/>
@@ -38,7 +29,7 @@
 
         <actions>
         
-            <if condition="!productId  && !productName">
+            <if condition="!productId  &amp;&amp; !productName">
                 <return error="true" message="Must provide either productName or productId."/>
             </if>
             <set field="result.productId" from="productId"/>
@@ -53,8 +44,9 @@
                 <if condition="cost">
                     <service-call name="create#CostComponent" in-map="[productId:newProductOut.productId,  cost:cost,  costUomId:costUomId,  fromDate: ec.user.nowTimestamp]" 
                               out-map="costComponentOut"/>
-                </service-call>
-                <check-errors>
+                    </service-call>
+                    <check-errors>
+                </if>
             </if>
             
             <if condition="productId">
@@ -73,7 +65,7 @@
                     <if condition="origCostComponentList">
                         <then>
                             <set field="origCostComponent" from="origCostComponentList[0]"/>
-                            <if condition="cost  && origCostComponent.cost  != cost">
+                            <if condition="cost   &amp;&amp;  origCostComponent.cost  != cost">
                                 <then>
                                     <set field="origCostComponent.thruDate" from="ec.user.nowTimestamp"/>
                                     <service-call name="update#CostComponent" in-map="origCostComponent"/>
@@ -95,4 +87,5 @@
             
         </actions>
     </service>
+    -->
 </services>

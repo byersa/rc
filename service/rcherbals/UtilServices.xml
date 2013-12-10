@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<services xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://moqui.org/xsd/service-definition-1.2.xsd">
+	<service verb="convert2Long" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/util/convert2Long.groovy">
+	    <in-parameters>
+	        <parameter name="rows" type="List" required="true"/>
+	    </in-parameters>
+	</service>
+</services>

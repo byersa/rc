@@ -49,14 +49,28 @@
                         ]
                 },
                 [
+                    'dijit/registry',
+                    "dojo/_base/lang",
+                    'rc/modules/BasicStore',
                     'dijit/layout/BorderContainer',
                     'dijit/layout/ContentPane',
                     'dojox/layout/ContentPane',
                     'rc/widgets/party/PartyTab',
                     'rc/widgets/product/ProductTab',
                     'rc/widgets/web/LocatorTab',
-                    'dijit/layout/TabContainer'
-                ]);
+                    'dijit/layout/TabContainer',
+                    'dojo/date/locale'
+                ],
+                function(registry, lang, BasicStore) {
+                    Date.prototype.toJSON = function(){
+                        return dojo.date.locale.format(this, {formatLength: "long", selector: "date", datePattern: 'yyyy-MM-dd HH:mm:ss.SSS z'});
+                    };
+                    var stateStore = new BasicStore({idProperty: "geoId",
+                        id: "stateStore",
+                        target: "party/getStateLookup"
+                        });
+                    registry.add(stateStore);
+                });
         </script>
     </head>
     <body class="claro rc">

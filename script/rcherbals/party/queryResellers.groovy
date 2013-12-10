@@ -47,6 +47,8 @@ import org.elasticsearch.index.query.QueryBuilders
 import org.elasticsearch.action.admin.indices.refresh.RefreshRequest
 import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
 
+import groovy.json.JsonSlurper
+
     org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("queryResellers.groovy")
 
     //def ddf = ec.entity.datasourceFactoryByGroupMap.get("transactional_nosql")
@@ -54,27 +56,39 @@ import org.elasticsearch.action.admin.indices.refresh.RefreshResponse
     ec.artifactExecution.disableAuthz()
 
     
-    logger.info("context: ${context}")
+    logger.info("context(2): ${context}")
 
         String address = "";
-        if(context.postalAddress) {
-            address = context.postalAddress
+        Double lat, lng;
+    logger.info("context.postalCode: ${context.postalCode}")
+        if(context.postalCode) {
+            address = context.postalCode + ", United States"
+            def url = new URL('http://ziptasticapi.com/' + context.postalCode)
+            logger.info("geocodeResellers, url(0): ${url}")
+            def geoCodeResult = url.getText()
+            logger.info("geocodeResellers, geoCodeResult(0): ${geoCodeResult}")
+            def slurper = new JsonSlurper()
+            def data = slurper.parseText(geoCodeResult)
+            logger.info("geocodeResellers, data(0): ${data}")
+            context.city = data.city
+            context.state = data.state
+            logger.info("context(postal): ${context}")
         }
         if(context.city && context.state) {
             address = context.city + "," + context.state
+            encodedAddress = URLEncoder.encode(address)
+            logger.info("geocodeResellers, address: ${address}, encoded: ${encodedAddress}")
+    
+            def url = new URL('http://maps.googleapis.com/maps/api/geocode/xml?address=' + encodedAddress + '&sensor=true')
+            def geoCodeResult = new XmlParser().parseText(url.getText())
+            logger.info("geocodeResellers, geoCodeResult: ${geoCodeResult}")
+            logger.info("geocodeResellers, geoCodeResult.result[0].geometry.location: ${geoCodeResult.result[0].geometry[0].location[0]}")
+            lat = geoCodeResult.result[0].geometry[0].location[0].lat.text().toDouble()
+            lng = geoCodeResult.result[0].geometry[0].location[0].lng.text().toDouble()
         }
-        encodedAddress = URLEncoder.encode(address)
-        logger.info("geocodeResellers, address: ${address}, encoded: ${encodedAddress}")
-/*
-        def url = new URL('http://maps.googleapis.com/maps/api/geocode/xml?address=' + encodedAddress + '&sensor=true')
-        def geoCodeResult = new XmlParser().parseText(url.getText())
-        logger.info("geocodeResellers, geoCodeResult: ${geoCodeResult}")
-        logger.info("geocodeResellers, geoCodeResult.result[0].geometry.location: ${geoCodeResult.result[0].geometry[0].location[0]}")
-        def lat = geoCodeResult.result[0].geometry[0].location[0].lat.text()
-        def lng = geoCodeResult.result[0].geometry[0].location[0].lng.text()
-*/
-def lat = 26.51928
-def lng = -81.94045
+
+//def lat = 26.51928
+//def lng = -81.94045
         SearchRequestBuilder srb = ec.elasticSearchClient.prepareSearch().setIndices("rcherbals").setTypes("object")
         logger.info("query documents, srb: ${srb}")
 		srb.setQuery(QueryBuilders.matchAllQuery())
@@ -82,7 +96,7 @@ def lng = -81.94045
         logger.info("query documents, srb 2: ${srb}")
 		GeoDistanceFilterBuilder fb = FilterBuilders.geoDistanceFilter("location")
         logger.info("query documents, fb: ${fb}")
-		fb.lat(lat).lon(lng).distance(50, DistanceUnit.KILOMETERS)
+		fb.lat(lat).lon(lng).distance(context.distance, DistanceUnit.KILOMETERS)
 		srb.setFilter(fb)
         logger.info("query documents, fb 2: ${fb}")
 		SearchResponse response = srb.execute().actionGet()

@@ -71,6 +71,12 @@
                 <div data-dojo-type="dijit/form/Button" name="querySubmit"  type="submit">Submit</div>
                 <div data-dojo-type="dijit/form/Button" type="button">Cancel</div>
             </div>
+                <div class="party-product">
+                    <div data-dojo-type="dijit/Toolbar" class="dgridmod-toolbar" >
+                        <div data-dojo-type="dijit/form/CheckBox"></div>
+                    </div>
+                    <div data-dojo-attach-point="productQueryGridNode"></div>
+                </div>
         </div>
         </div>
 
@@ -114,41 +120,44 @@
                         </tbody>
                     </table>
                 </div>
-                <div data-dojo-type="dijit/form/Form" class="partytab-edit"
-                     data-dojo-attach-point="editFormPerson"
+                <div data-dojo-type="dijit/form/Form" 
+                     data-dojo-attach-point="editForm"
                      data-dojo-props="action: 'javascript:void(0)'">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <th>First Name</th>
-                                <th>MI</th>
-                                <th>Last Name</th>
-                            </tr>
-                            <tr>
-                                <th><div data-dojo-type="dijit/form/TextBox" name="firstName"></div></th>
-                                <th><div data-dojo-type="dijit/form/TextBox" name="middleName"></div></th>
-                                <th><div data-dojo-type="dijit/form/TextBox" name="lastName"></div></th>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <div data-dojo-type="dijit/form/Form" class="partytab-edit"
-                     data-dojo-attach-point="editFormOrg"
-                     data-dojo-props="action: 'javascript:void(0)'">
-                    <table>
-                        <tbody>
-                            <tr>
-                                <th colspan="3">Organization Name</th>
-                            </tr>
-                            <tr>
-                                <th colspan="3"><div data-dojo-type="dijit/form/TextBox" name="organizationName"></div></th>
-                            </tr>
-                        </tbody>
-                    </table>
                     <input data-dojo-type="dijit/form/TextBox" type="hidden" name="partyTypeEnumId"></input>
                     <input data-dojo-type="dijit/form/TextBox" type="hidden" name="partyId"></input>
+                    <input data-dojo-type="dijit/form/TextBox" type="hidden" name="partyRelationshipId"></input>
+                    <input data-dojo-type="dijit/form/TextBox" type="hidden" name="relationshipTypeEnumId"></input>
+                    <input data-dojo-type="dijit/form/TextBox" type="hidden" name="parentPartyId"></input>
                     <input data-dojo-type="dijit/form/TextBox" type="hidden" name="fromDate"></input>
                     <input data-dojo-type="dijit/form/TextBox" type="hidden" name="thruDate"></input>
+                    <div data-dojo-attach-point="editFormPerson">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th>First Name</th>
+                                    <th>MI</th>
+                                    <th>Last Name</th>
+                                </tr>
+                                <tr>
+                                    <th><div data-dojo-type="dijit/form/TextBox" name="firstName"></div></th>
+                                    <th><div data-dojo-type="dijit/form/TextBox" name="middleName"></div></th>
+                                    <th><div data-dojo-type="dijit/form/TextBox" name="lastName"></div></th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div data-dojo-attach-point="editFormOrg">
+                        <table>
+                            <tbody>
+                                <tr>
+                                    <th colspan="3">Organization Name</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="3"><div data-dojo-type="dijit/form/TextBox" name="organizationName"></div></th>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                     <table>
                         <tbody>
@@ -178,13 +187,11 @@
                     </div>
                     <div class="assoc-grid" data-dojo-attach-point="assocPartyGridNode" ></div>
                 </div-->
-                
-                <div id="assocProductGridContainer" class="assoc-grid-container" >
-                    <div class="assoc-grid-header" >
-                        <div class="assoc-grid-title" style="float: left;">Products</div>
-                        <div id="assocProductGridAdd" class="assoc-grid-add" style="float: right;">+</div>
+                <div class="party-product">
+                    <div data-dojo-type="dijit/Toolbar" class="dgridmod-toolbar" >
+                        <div data-dojo-type="dijit/form/CheckBox"></div>
                     </div>
-                    <div class="assoc-grid" data-dojo-attach-point="assocProductGridNode" ></div>
+                    <div data-dojo-attach-point="productGridNode"></div>
                 </div>
                 <div data-dojo-type="dijit/form/Button" name="saveDetail"  type="submit">Save</div>
                 <div data-dojo-type="dijit/form/Button" name="cancelDetail" type="button">Cancel</div>

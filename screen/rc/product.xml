@@ -10,21 +10,29 @@
                       out-map="spOut" web-send-json-response="false">
         </service-call>
         <service-call name="rc.ProductServices.getProduct" in-map="spOut.productId"
-                      web-send-json-response="true">
+                      out-map="productOut">
         </service-call>
+        <!--service-call name="rcherbals.UtilServices.convert2Long">
+            <field-map field-name="rows" from="productOut.items"/>
+        </service-call-->
+            <script><![CDATA[
+                ec.web.sendJsonResponse(productOut)
+            ]]></script>
       </actions>
       <default-response type="none"/>
     </transition>
-    <transition name="getProductList">
-        <service-call name="rcherbals.ProductServices.getProductList" in-map="ec.web.parameters"
-                      web-send-json-response="true">
-        </service-call>
-        <default-response type="none"/>
-    </transition>
     <transition name="queryProduct">
+      <actions>
         <service-call name="rcherbals.ProductServices.queryProduct" in-map="ec.web.parameters"
-                      web-send-json-response="true">
+                      out-map="productOut">
         </service-call>
+        <!--service-call name="rcherbals.UtilServices.convert2Long">
+            <field-map field-name="rows" from="productOut.items"/>
+        </service-call-->
+            <script><![CDATA[
+                ec.web.sendJsonResponse(productOut)
+            ]]></script>
+      </actions>
         <default-response type="none"/>
     </transition>
     <widgets>

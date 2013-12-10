@@ -1,7 +1,7 @@
 define(["dojo/_base/xhr", "dojo/json", "dojo/_base/declare", "dojo/store/util/QueryResults",
-        "dojo/_base/Deferred", "dojo/store/Memory", "dojo/when", "dojo/_base/lang"
+        "dojo/_base/Deferred", "dojo/store/Memory", "dojo/when", "dojo/_base/lang", 'dojo/_base/array'
 
-], function(xhr, JSON, declare, QueryResults, Deferred, Memory, when, lang) {
+], function(xhr, JSON, declare, QueryResults, Deferred, Memory, when, lang, array) {
 
 /** BasicStore is an extension of Memory store that is designed to allow both retrieval of initial data and use of
   * the queryEngine for filtering data within the same query call.
@@ -14,6 +14,7 @@ return declare("rc.modules.BasicStore", Memory, {
     target: "",
     content: null,
     accepts: "application/javascript, application/json", 
+    timestamps: null,
     
     
     constructor: function(/*dojo.store.JsonRest*/ options){
@@ -96,6 +97,31 @@ return declare("rc.modules.BasicStore", Memory, {
         });
         
         return QueryResults(returnDeferred);
+    },
+    
+    setData: function(data) {
+        
+		if(data.items){
+			// just for convenience with the data format IFRS expects
+			this.idProperty = data.identifier;
+			data = this.data = data.items;
+		}else{
+			this.data = data;
+		}
+		this.index = {};
+		var val;
+		for(var i = 0, l = data.length; i < l; i++){
+		    array.forEach(this.timestamps, function(fieldName) {
+		        val = data[i][fieldName];
+		        if (val && typeof val == "string") {
+		            data[i][fieldName] = new Date(val);
+		        }
+		    }, this);
+			this.index[data[i][this.idProperty]] = i;
+		}
+    },
+    
+    eof: function() {
     }
 });
 

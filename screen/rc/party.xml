@@ -5,20 +5,85 @@
         default-menu-include="false" require-authentication="false">
 
     <transition name="addNewParty">
-        <service-call name="rcherbals.PartyServices.storeParty" in-map="ec.web.parameters" web-send-json-response="true">
-        </service-call>
+        <actions>
+            <script><![CDATA[
+            import groovy.json.JsonSlurper
+            
+
+            ec.artifactExecution.disableAuthz()            
+            org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("addNewParty")
+            logger.info("in addNewParty 2, data: ${ec.web.parameters}")
+            def slurper = new JsonSlurper()
+            ec.web.parameters.postalData = slurper.parseText(ec.web.parameters.postalData)
+            ec.web.parameters.phoneData = slurper.parseText(ec.web.parameters.phoneData)
+            ec.web.parameters.emailData = slurper.parseText(ec.web.parameters.emailData)
+            if (!ec.web.parameters.parentPartyId) { ec.web.parameters.parentPartyId = 'RCHERBALS'}
+            logger.info("in addNewParty 3, ec.web.parameters: ${ec.web.parameters}")
+            ]]></script>
+            <service-call name="rcherbals.PartyServices.storeParty" in-map="ec.web.parameters" out-map="newOut">
+            </service-call>
+            <service-call name="rcherbals.PartyServices.queryParty"  out-map="updatedData">
+                <field-map field-name="toPartyId" from="newOut.parentPartyId"/>
+                <field-map field-name="fromPartyIdList" from="[newOut.partyId]"/>
+                <field-map field-name="partyTypeEnumId" from="newOut.partyTypeEnumId"/>
+            </service-call>
+            <!--service-call name="rcherbals.UtilServices.convert2Long">
+                <field-map field-name="rows" from="updatedData.items"/>
+            </service-call-->
+            <script><![CDATA[
+                ec.web.sendJsonResponse(updatedData)
+            ]]></script>
+        </actions>
       <default-response type="none"/>
     </transition>
     
     <transition name="getLocalResellers">
-        <service-call name="rcherbals.PartyServices.queryResellers" in-map="ec.web.parameters" web-send-json-response="true">
-        </service-call>
+        <actions>
+            <script><![CDATA[
+                import groovy.json.JsonSlurper
+                
+            ]]></script>
+            <log message="getLocalResellers, context:  ${context}"/>
+            <service-call name="rcherbals.PartyServices.queryResellers" in-map="ec.web.parameters" out-map="resellersOut">
+            </service-call>
+            <log message="getLocalResellers, resellersOut:  ${resellersOut}"/>
+            <if condition="ec.web.parameters.productIdList">
+                <then>
+                    <script><![CDATA[
+                        def slurper = new JsonSlurper()
+                        def productIdList = slurper.parseText(ec.web.parameters.productIdList)
+                        //def productIdList = ec.web.parameters.productIdList
+                    ]]></script>
+                    <log message="getLocalResellers, productIdList:  ${productIdList}"/>
+                    <service-call name="rcherbals.PartyServices.filterResellersByProduct" in-map="resellersOut" out-map="filteredResellers">
+                        <field-map field-name="productIdList" from="productIdList"/>
+                    </service-call>
+                    <log message="getLocalResellers, filteredResellers:  ${filteredResellers}"/>
+                    <!--service-call name="rcherbals.UtilServices.convert2Long">
+                        <field-map field-name="rows" from="filteredResellers.items"/>
+                    </service-call-->
+                    <script><![CDATA[
+                        ec.web.sendJsonResponse(filteredResellers)
+                    ]]></script>
+                </then>
+                <else>
+                    <!--service-call name="rcherbals.UtilServices.convert2Long">
+                        <field-map field-name="rows" from="resellersOut.items"/>
+                    </service-call-->
+                    <script><![CDATA[
+                        ec.web.sendJsonResponse(resellersOut)
+                    ]]></script>
+                </else>
+            </if>
+        </actions>        
       <default-response type="none"/>
     </transition>
+    
     <transition name="updateParty">
         <actions>
             <script><![CDATA[
             import groovy.json.JsonSlurper
+            
 
             ec.artifactExecution.disableAuthz()            
             org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("updateParty")
@@ -27,17 +92,56 @@
             ec.web.parameters.postalData = slurper.parseText(ec.web.parameters.postalData)
             ec.web.parameters.phoneData = slurper.parseText(ec.web.parameters.phoneData)
             ec.web.parameters.emailData = slurper.parseText(ec.web.parameters.emailData)
-            logger.info("ec.web.parameters: ${ec.web.parameters}")
+            if (!ec.web.parameters.parentPartyId) { ec.web.parameters.parentPartyId = 'RCHERBALS'}
+            logger.info("in updateParty 3, ec.web.parameters: ${ec.web.parameters}")
             ]]></script>
-            <script></script>
-            <service-call name="rcherbals.PartyServices.storeParty" in-map="ec.web.parameters" out-map="updatedData">
+            
+            <service-call name="rcherbals.PartyServices.storeParty" in-map="ec.web.parameters" out-map="newOut">
             </service-call>
+            
+            <script><![CDATA[
+                if (ec.web.parameters.productData) {
+                    logger.info("in updateParty, productData(str): ${ec.web.parameters.productData}")
+                    def productData = slurper.parseText(ec.web.parameters.productData)
+                    logger.info("in updateParty, productData(obj): ${productData}")
+                    def productPartyRec = [partyId: newOut.partyId, roleTypeId: "Reseller"]
+                    def results
+                    productData.each() {product ->
+                        productPartyRec.productId = product.productId
+                        if(!product.thruDate) {
+                            productPartyRec.fromDate = product.fromDate ?: ec.user.nowTimestamp
+                            productPartyRec.roleTypeId = product.roleTypeId ?: "Reseller"
+                            if(productPartyRec.thruDate) {
+                                productPartyRec.remove("thruDate")
+                            }
+                            logger.info("in updateParty, productPartyRec(create): ${productPartyRec}")
+                            ec.service.sync().name("create", "ProductParty").parameters(productPartyRec).call()
+                        } else {
+                            productPartyRec.thruDate = product.thruDate
+                            productPartyRec.fromDate = product.fromDate
+                            productPartyRec.roleTypeId = product.roleTypeId ?: "Reseller"
+                            ec.service.sync().name("update", "ProductParty").parameters(productPartyRec).call()
+                            logger.info("in updateParty, productPartyRec(update): ${productPartyRec}")
+                        }
+                    }
+                }
+            ]]></script>
+            
+            <service-call name="rcherbals.PartyServices.queryParty"  out-map="updatedData">
+                <field-map field-name="toPartyId" from="newOut.parentPartyId"/>
+                <field-map field-name="fromPartyIdList" from="[newOut.partyId]"/>
+                <field-map field-name="partyTypeEnumId" from="newOut.partyTypeEnumId"/>
+            </service-call>
+            <!--service-call name="rcherbals.UtilServices.convert2Long">
+                <field-map field-name="rows" from="updatedData.items"/>
+            </service-call-->
             <script><![CDATA[
                 ec.web.sendJsonResponse(updatedData)
             ]]></script>
         </actions>
       <default-response type="none"/>
     </transition>
+    
     <transition name="getStateLookup">
         <actions>
             <script><![CDATA[
@@ -62,18 +166,73 @@
         </actions>
       <default-response type="none"/>
     </transition>
+    
     <transition name="getPartyList">
-        <service-call name="rcherbals.PartyServices.queryParty" in-map="ec.web.parameters"
+        <actions>
+            <script><![CDATA[
+            
+                org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("getPartyList")
+                logger.info("in getPartyList, parameters: ${ec.web.parameters}")
+            ]]></script>
+            <service-call name="rcherbals.PartyServices.queryParty" in-map="ec.web.parameters" out-map="resellersOut">
                       web-send-json-response="true">
                       <field-map field-name="toPartyId" value="RCHERBALS"/>
                       <field-map field-name="partyTypeEnumId" value="PtyOrganization"/>
-        </service-call>
+            </service-call>
+            <service-call name="rcherbals.PartyServices.assocProductWParty" in-map="resellersOut"  out-map="resellers2Out">
+            </service-call>
+            <log message="getPartyList, resellers2Out:  ${resellers2Out}"/>
+            <!--service-call name="rcherbals.UtilServices.convert2Long">
+                <field-map field-name="rows" from="resellers2Out.items"/>
+            </service-call-->
+            <script><![CDATA[
+                logger.info("in getPartyList, resellers2Out: ${resellers2Out}")
+                ec.web.sendJsonResponse(resellers2Out)
+            ]]></script>
+        </actions>        
         <default-response type="none"/>
     </transition>
     <transition name="queryParty">
-        <service-call name="rcherbals.PartyServices.queryParty" in-map="ec.web.parameters"
-                      web-send-json-response="true">
-        </service-call>
+        <actions>
+            <script><![CDATA[
+                import groovy.json.JsonSlurper
+                
+                org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("getPartyList")
+                logger.info("in getPartyList, parameters: ${ec.web.parameters}")
+            ]]></script>
+            <log message="queryParty, context:  ${context}"/>
+            <service-call name="rcherbals.PartyServices.queryParty" in-map="ec.web.parameters" out-map="resellersOut">
+            </service-call>
+            <log message="getLocalResellers, resellersOut:  ${resellersOut}"/>
+            <if condition="ec.web.parameters.productIdList">
+                <then>
+                    <script><![CDATA[
+                        def slurper = new JsonSlurper()
+                        def productIdList = slurper.parseText(ec.web.parameters.productIdList)
+                        //def productIdList = ec.web.parameters.productIdList
+                    ]]></script>
+                    <log message="getLocalResellers, productIdList:  ${productIdList}"/>
+                    <service-call name="rcherbals.PartyServices.filterResellersByProduct" in-map="resellersOut" out-map="filteredResellers">
+                        <field-map field-name="productIdList" from="productIdList"/>
+                    </service-call>
+                    <log message="getLocalResellers, filteredResellers:  ${filteredResellers}"/>
+                    <!--service-call name="rcherbals.UtilServices.convert2Long">
+                        <field-map field-name="rows" from="filteredResellers.items"/>
+                    </service-call-->
+                    <script><![CDATA[
+                        ec.web.sendJsonResponse(filteredResellers)
+                    ]]></script>
+                </then>
+                <else>
+                    <!--service-call name="rcherbals.UtilServices.convert2Long">
+                        <field-map field-name="rows" from="resellersOut.items"/>
+                    </service-call-->
+                    <script><![CDATA[
+                        ec.web.sendJsonResponse(resellersOut)
+                    ]]></script>
+                </else>
+            </if>
+        </actions>        
         <default-response type="none"/>
     </transition>
     <widgets>

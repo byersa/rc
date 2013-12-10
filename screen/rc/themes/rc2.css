@@ -110,12 +110,32 @@
           height: 100%;
           border: none;
     }
+    .locator-map-container {
+        position: absolute;
+          height: 100%;
+          border: none;
+    }
+    
+    .locator-list-container {
+        position: absolute;
+        width: 400px;
+        height: 100%;
+        border: none;
+    }
+    
     .locator-map {
         position: absolute;
           width: 500px;
           height: 400px;
-          left: 10px;
-          top: 10px;
+          float: left;
+          border: none;
+    }
+    
+    .locator-map {
+        position: absolute;
+          width: 300px;
+          height: 400px;
+          float: right;
           border: none;
     }
     
@@ -125,4 +145,32 @@
 
     .product-name {
         text-align: left;
+    }
+    
+    .party-product {
+        width: 45%;
+        height: 160px;
+    }
+    
+    .party-product .dgrid{
+        width: 100%;
+        height: 130px;
+    }
+    
+    .party-product .dgrid .dgrid-scroller {
+        overflow: auto;
+        }
+        
+    .locator-grid .field-organizationName {
+        font-size: 16px;
+        font-weight: heavy;
+    }
+    
+    .locator-list-header {
+        font-size: 16px;
+        font-weight: heavy;
+        margin: 6px;
+    }
+    .locator-grid .dgrid-cell {
+        border: none;
     }

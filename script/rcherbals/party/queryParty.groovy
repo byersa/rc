@@ -44,6 +44,10 @@ import org.moqui.impl.StupidUtilities
         edv = ef.makeEntityDynamicView()
         edv.addMemberEntity("PTY", "Party", null, null, null)
         edv.addAliasAll("PTY", null)
+    if (context.fromPartyIdList) {
+        EntityConditionImplBase cond = ecf.makeCondition("partyId", EntityCondition.IN, context.fromPartyIdList)
+        condList.push(cond)
+    }
     if (context.partyTypeEnumId == "PtyOrganization") {
             edv.addMemberEntity("ORG", "Organization", this.masterJoinAlias, false, ['partyId':'partyId'])
             edv.addAliasAll("ORG", null)
@@ -150,7 +154,7 @@ import org.moqui.impl.StupidUtilities
             List<Node> mbrnds = edv.getMemberEntityNodes()
             logger.info("queryParty, mbrnds(final): ${mbrnds}")
         logger.info("In: queryParty, query on Party and Organization, condList: ${condList}")
-        EntityList partyViewEntityList 
+        EntityList partyViewEntityList, filteredList
         if(condList.size) {
             EntityConditionImplBase entityListCond = ecf.makeCondition(condList)
             logger.info("In: queryParty, entityListCond: ${entityListCond}")
@@ -162,7 +166,11 @@ import org.moqui.impl.StupidUtilities
             partyViewEntityList = ef.list()
         }        
         logger.info("In: queryParty, query on Party and Organization, partyViewEntityList(${partyViewEntityList.size()}: ${partyViewEntityList}")
-    EntityList filteredList = partyViewEntityList.filterByDate("ptyrelFromDate", "ptyrelThruDate", null)
+    if(context.toPartyId) {
+        filteredList = partyViewEntityList.filterByDate("ptyrelFromDate", "ptyrelThruDate", null)
+    } else {
+        filteredList = partyViewEntityList; 
+    }
     if (context.emailAddress) { filteredList = filteredList.filterByDate("emailCntctFromDate", "emailCntctThruDate", null) }
     if (context.contactNumber) { filteredList = filteredList.filterByDate("telecomCntctFromDate", "telecomCntctThruDate", null) }
     if (context.city || context.stateProvinceGeoId || postalCode) { filteredList = filteredList.filterByDate("postalCntctFromDate", "postalCntctThruDate", null) }
@@ -170,7 +178,8 @@ import org.moqui.impl.StupidUtilities
     List <EntityValue> partyListJson = new ArrayList()
 
     filteredList.each {party ->
-        Map partyMap = ["partyId": party.partyId, "partyTypeEnumId": party.partyTypeEnumId]
+        Map partyMap = ["partyId": party.partyId, "partyTypeEnumId": party.partyTypeEnumId, "relationshipTypeEnumId": party.ptyrelRelationshipTypeEnumId, 
+            "partyRelationshipId": party.ptyrelPartyRelationshipId, "parentPartyId": party.ptyrelToPartyId, "thruDate": party.ptyrelThruDate]
         EntityValue person, org
         if (party.partyTypeEnumId == "PtyPerson") {
             //person = ec.entity.makeFind("Person").condition(["partyId": party.partyId]).one()

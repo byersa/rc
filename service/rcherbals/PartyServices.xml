@@ -7,11 +7,33 @@
 	        <parameter name="state" required="false"/>
 	        <parameter name="postalCode" required="false"/>
 	        <parameter name="productIds" type="List" required="false"/>
+	        <parameter name="distance" type="Double" required="false" default-value="50"/>
 	    </in-parameters>
 	    <out-parameters>
 	        <parameter name="items" type="List" required="true"/>
 	    </out-parameters>
 	</service>
+	<service verb="filterResellersByProduct" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/party/filterResellers.groovy">
+	    <in-parameters>
+	        <parameter name="productIdList" type="List" required="false"/>
+	        <parameter name="items" type="List" required="true"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="items" type="List" required="true"/>
+	    </out-parameters>
+	</service>
+	
+	<service verb="assocProductWParty" type="script" authenticate="false"
+	         location="component://rc/script/rcherbals/party/assocProductWParty.groovy">
+	    <in-parameters>
+	        <parameter name="items" type="List" required="true"/>
+	    </in-parameters>
+	    <out-parameters>
+	        <parameter name="items" type="List" required="true"/>
+	    </out-parameters>
+	</service>
+	
 	<service verb="geocodeResellers" type="script" authenticate="false" transaction-timeout="300" transaction="ignore"
 	         location="component://rc/script/rcherbals/party/geocodeResellers.groovy">
 	    <in-parameters>
@@ -78,6 +100,7 @@
             <parameter name="parentPartyId" type="String" required="false"/>
             <parameter name="roleTypeId" type="String" required="false" default-value="Reseller"/>
             <parameter name="partyTypeEnumId" type="String" required="false"/>
+            <parameter name="partyRelationshipId" type="String" required="false"/>
             <parameter name="relationshipTypeEnumId" type="String" required="false" default-value="PrtCustomer"/>
             <parameter name="postalData" type="List" required="false"/>
             <parameter name="emailData" type="List" required="false"/>
@@ -87,9 +110,12 @@
             <parameter name="firstName" type="String" required="false"/>
             <parameter name="middleName" type="String" required="false"/>
             <parameter name="organizationName" type="String" required="false"/>
+            <parameter name="thruDate" type="Timestamp" required="false"/>
         </in-parameters>
 	    <out-parameters>
-	        <parameter name="items" type="List" required="true"/>
+	        <parameter name="partyId" required="true"/>
+	        <parameter name="parentPartyId" required="true"/>
+	        <parameter name="partyTypeEnumId" required="true"/>
 	    </out-parameters>
         <actions>
             <!--script><![CDATA[
@@ -156,6 +182,8 @@
                     <entity-create value-field="party"/>  
                     <log message="party  2:  ${party}"/>
                     <set field="partyId" from="party.partyId"/>
+                    <set field="item.partyId" from="party.partyId"/>
+                    <set field="item.partyTypeEnumId" from="party.partyTypeEnumId"/>
                             
                     <if condition="partyTypeEnumId=='PtyPerson'">
                             <entity-make-value entity-name="Person" value-field="person"/>
@@ -187,7 +215,6 @@
             
             <check-errors/>
             
-            <set field="returnPostal" from="[]"/>
             <iterate list="postalData" entry="postal">
                         <log message="storeParty postal  ( edit):  ${postal}"/>
                 <if condition="postal.contactMechId">
@@ -204,6 +231,7 @@
                         <check-errors/>
                         <log message="postalAddressList:  ${postalAddressList}"/>
                         <set field="postalAddress" from="postalAddressList ?  postalAddressList[0]  :  null"/>
+                        <!-- perform update if changed -->
                         <if>
                             <condition>
                                     <expression>
@@ -226,7 +254,7 @@
                                 </service-call>
                                 <log message="postalOut  4:  ${postalOut}"/>
                                 <check-errors/>
-                                <set field="postal.contactMechId" from="postalOut.contactMechId"/>
+                                <!--set field="postal.contactMechId" from="postalOut.contactMechId"/-->
                             </then>
                         </if>
                     </then>
@@ -240,126 +268,12 @@
                         <log message="postalOut  2:  ${postalOut}"/>
                         <check-errors/>
                         <set field="postal.contactMechId" from="postalOut.contactMechId"/>
-                        <!--set field="returnRec" from="[contactMechId: postalOut.contactMechId, address1: postalOut.address1, address2: postalOut.address2, city: postalOut.city, stateProvinceGeoId: postalOut.stateProvinceGeoId, postalCode: postalOut.postalCode]"/>
-                        <log message="returnRec:  ${returnRec}"/>
-                        <set field="returnPostal" from="returnPostal.push(returnRec)"/>
-                        <script><![CDATA[
-                             returnPostal.push(returnRec)
-                        ]]></script>
-                        <log message="returnPostal:  ${returnPostal}"/-->
                     </else>
                 </if>
             </iterate>
-            <log message="postalData  1:  ${postalData}"/>
-<!--            
-            <log message="emailData  1:  ${emailData}"/>
+
             <iterate list="emailData" entry="email">
-                <if condition="email.contactMechId">
-                    <then>
-                        <entity-find-one entity-name="PartyContactMechInfo" value-field="emailAddress">
-                            <econditions>
-                                <econdition field-name="partyId" from="party.partyId"/>
-                                <econdition field-name="contactMechId" from="email.contactMechId"/>
-                            </econditions>
-                        </entity-find-one>
-                        <check-errors/>
-                        <if>
-                            <condition>
-                                <not>
-                                    <and>
-                                        <compare field="email.infoString" to-field="emailAddress.infoString"/>
-                                        <compare field="email.contactMechPurposeId" to-field="emailAddress.contactMechPurposeId"/>
-                                        <compare field="email.fromDate" to-field="emailAddress.fromDate"/>
-                                        <compare field="email.thruDate" to-field="emailAddress.thruDate"/>
-                                    </and>
-                                </not>
-                            </condition>
-                            <then>
-                                <log message="email  1:  ${email},  party.partyId:  ${party.partyId}"/>
-                            
-                                <service-call name="mantle.party.ContactServices.update#PartyContactOther" in-map="email" out-map="emailOut">
-                                </service-call>
-                                <log message="emailOut  1:  ${emailOut}"/>
-                                <check-errors/>
-                            </then>
-                        </if>
-                    </then>
-                    <else>
-                        <set field="email.partyId" from="party.partyId"/>
-                        <set field="email.contactMechTypeEnumId" value="CmtTelecomNumber"/>
-                        <log message="email  1:  ${email},  party.partyId:  ${party.partyId}"/>
-                    
-                        <service-call name="mantle.party.ContactServices.create#EmailAddress" in-map="email" out-map="emailOut">
-                        </service-call>
-                        <log message="emailOut  1:  ${emailOut}"/>
-                        <check-errors/>
-                        <set field="email.contactMechId" from="emailOut.contactMechId"/>
-                    </else>
-                </if>
-            </iterate>
-            <log message="emailData  1:  ${emailData}"/>
-            
-            <iterate list="phoneData" entry="phone">
-                <set field="phone.partyId" from="party.partyId"/>
-                <set field="phone.contactMechTypeEnumId" value="CmtTelecomNumber"/>
-                <log message="phone:  ${phone}"/>
-                <service-call name="mantle.party.ContactServices.createTelecomNumber" in-map="phone" out-map="phoneOut">
-                </service-call>
-                <check-errors/>
-                <set field="phone.contactMechId" from="phoneOut.contactMechId"/>
-            </iterate>
-            <log message="phoneData  1:  ${phoneData}"/>
-            
-            <log message="phoneData  2:  ${phoneData}"/>
-            <iterate list="phoneData" entry="phone">
-                <if condition="phone.contactMechId">
-                    <then>
-                        <entity-find-one entity-name="PartyContactMechTelecomNumber" value-field="telecomNumber">
-                            <econditions>
-                                <econdition field-name="partyId" from="party.partyId"/>
-                                <econdition field-name="contactMechId" from="phone.contactMechId"/>
-                            </econditions>
-                        </entity-find-one>
-                        <check-errors/>
-                        <if>
-                            <condition>
-                                <not>
-                                    <and>
-                                        <compare field="phone.infoString" to-field="telecomNumber.contactNumber"/>
-                                        <compare field="phone.contactMechPurposeId" to-field="telecomNumber.contactMechPurposeId"/>
-                                        <compare field="phone.fromDate" to-field="telecomNumber.fromDate"/>
-                                        <compare field="phone.thruDate" to-field="telecomNumber.thruDate"/>
-                                    </and>
-                                </not>
-                            </condition>
-                            <then>
-                                <log message="phone  1:  ${phone},  party.partyId:  ${party.partyId}"/>
-                            
-                                <service-call name="mantle.party.ContactServices.update#PartyContactOther" in-map="phone" out-map="phoneOut">
-                                </service-call>
-                                <log message="phoneOut  1:  ${phoneOut}"/>
-                                <check-errors/>
-                            </then>
-                        </if>
-                    </then>
-                    <else>
-                        <set field="phone.partyId" from="party.partyId"/>
-                        <set field="phone.contactMechTypeEnumId" value="CmtTelecomNumber"/>
-                        <log message="phone  1:  ${phone},  party.partyId:  ${party.partyId}"/>
-                    
-                        <service-call name="mantle.party.ContactServices.create#PartyTelecomNumber" in-map="phone" out-map="phoneOut">
-                        </service-call>
-                        <log message="phoneOut  1:  ${phoneOut}"/>
-                        <check-errors/>
-                        <set field="phone.contactMechId" from="phoneOut.contactMechId"/>
-                    </else>
-                </if>
-            </iterate>
-            <log message="phoneData  1:  ${phoneData}"/>
-            -->
-            <set field="returnEmail" from="[]"/>
-            <iterate list="emailData" entry="email">
-                        <log message="storeParty email  ( edit):  ${email}"/>
+                <log message="storeParty email  ( edit):  ${email}"/>
                 <if condition="email.contactMechId">
                     <then>
                         <log message="email.contactMechId  (0):  ${email.contactMechId}"/>
@@ -392,7 +306,6 @@
                                 </service-call>
                                 <log message="emailOut  4:  ${emailOut}"/>
                                 <check-errors/>
-                                <set field="email.contactMechId" from="emailOut.contactMechId"/>
                             </then>
                         </if>
                     </then>
@@ -407,18 +320,10 @@
                         <log message="emailOut  2:  ${emailOut}"/>
                         <check-errors/>
                         <set field="email.contactMechId" from="emailOut.contactMechId"/>
-                        <!--set field="returnRec" from="[contactMechId: emailOut.contactMechId, address1: emailOut.address1, address2: emailOut.address2, city: emailOut.city, stateProvinceGeoId: emailOut.stateProvinceGeoId, emailCode: emailOut.emailCode]"/>
-                        <log message="returnRec:  ${returnRec}"/>
-                        <set field="returnEmail" from="returnEmail.push(returnRec)"/>
-                        <script><![CDATA[
-                             returnEmail.push(returnRec)
-                        ]]></script>
-                        <log message="returnEmail:  ${returnEmail}"/-->
                     </else>
                 </if>
             </iterate>
             
-            <set field="returnPhone" from="[]"/>
             <iterate list="phoneData" entry="phone">
                         <log message="storeParty phone  ( edit):  ${phone}"/>
                 <if condition="phone.contactMechId">
@@ -453,7 +358,6 @@
                                 </service-call>
                                 <log message="phoneOut  4:  ${phoneOut}"/>
                                 <check-errors/>
-                                <set field="phone.contactMechId" from="phoneOut.contactMechId"/>
                             </then>
                         </if>
                     </then>
@@ -468,17 +372,10 @@
                         <log message="phoneOut  2:  ${phoneOut}"/>
                         <check-errors/>
                         <set field="phone.contactMechId" from="phoneOut.contactMechId"/>
-                        <!--set field="returnRec" from="[contactMechId: phoneOut.contactMechId, address1: phoneOut.address1, address2: phoneOut.address2, city: phoneOut.city, stateProvinceGeoId: phoneOut.stateProvinceGeoId, phoneCode: phoneOut.phoneCode]"/>
-                        <log message="returnRec:  ${returnRec}"/>
-                        <set field="returnPhone" from="returnPhone.push(returnRec)"/>
-                        <script><![CDATA[
-                             returnPhone.push(returnRec)
-                        ]]></script>
-                        <log message="returnPhone:  ${returnPhone}"/-->
                     </else>
                 </if>
             </iterate>
-            <log message="emailData  1:  ${emailData}"/>
+            
                 <entity-make-value entity-name="PartyRole" value-field="partyRole"/>
                 <set field="partyRole.partyId" from="party.partyId"/>
                 <set field="partyRole.roleTypeId" from="roleTypeId"/>
@@ -494,11 +391,14 @@
                 
                 <if condition="partyRelationshipId">
                     <then>
-                        <entity-find-one entity-name="PartyRelationshipId" value-field="partyRelationship">
+                        <entity-find-one entity-name="PartyRelationship" value-field="partyRelationship">
                             <field-map field-name="partyRelationshipId" from="partyRelationshipId"/>
                         </entity-find-one>
-                        <if condition="relationshipTypeEnumId != partyRelationship.relationshipTypeEnumId &amp;&amp; !partyRelationship.thruDate">
+                        <log message="storeParty, partyRelationship (exists)  ${partyRelationship}"/>
+                        <log message="storeParty, relationshipTypeEnumId  ${relationshipTypeEnumId}"/>
+                        <if condition="(relationshipTypeEnumId != partyRelationship.relationshipTypeEnumId) ||  (thruDate != partyRelationship.thruDate)">
                             <set field="partyRelationship.relationshipTypeEnumId" from="relationshipTypeEnumId" />
+                            <set field="partyRelationship.thruDate" from="thruDate" />
                             <log message="storeParty, partyRelationship   (update):  ${partyRelationship}"/>
                             <entity-update value-field="partyRelationship"/>  
                         </if>
@@ -517,16 +417,9 @@
                 </if>
                 <log message="partyRelation  2:  ${partyRelation}"/>
                 
-                <set field="item.emailData" from="emailData"/>
-                <set field="item.parentPartyId" from="partyRelation.toPartyId"/>
-                <set field="item.relationshipTypeEnumId" from="partyRelation.relationshipTypeEnumId"/>
-                <set field="item.partyRelationshipId" from="partyRelation.partyRelationshipId"/>
-                <log message="item:  ${item}"/>
-                <set field="item2" from="[]"/>
-                <set field="item2[0]" from="item"/>
-                
-                <log message="item2:  ${item2}"/>
-                <set field="result.items" from="item2"/>
+                <set field="result.partyId" from="party.partyId"/>
+                <set field="result.parentPartyId" from="parentPartyId"/>
+                <set field="result.partyTypeEnumId" from="party.partyTypeEnumId"/>
                 <check-errors/>
                 <log message="result  2:  ${result}"/>
         </actions>

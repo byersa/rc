@@ -6,6 +6,7 @@ define([
         'dijit/registry',
         'dojo/query',
         'dojo/on',
+        'dojo/_base/array',
         'dijit/_WidgetBase',
         'dijit/_TemplatedMixin',
         'dijit/_WidgetsInTemplateMixin',
@@ -14,7 +15,7 @@ define([
         'dgrid/Selection',
         'dgrid/Keyboard',
         'dgrid/selector',
-        'dojo/store/Memory',
+        'rc/modules/BasicStore',
         'dojo/data/ObjectStore',
         'rql/js-array',
         'dijit/form/ValidationTextBox',
@@ -27,15 +28,16 @@ define([
         'dojox/validate/web',
         'dojo/text!./templates/AssocWidget.html'
 
-        ], function(declare, lang, domStyle, domConstruct, registry, query, on,
+        ], function(declare, lang, domStyle, domConstruct, registry, query, on, array,
                 WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
               Observable, OnDemandGrid, Selection, Keyboard, selector,
-              Memory, ObjectStore, jsArray,
+              BasicStore, ObjectStore, jsArray,
               ValidationTextBox, TextBox, Select, Button, FilteringSelect, Form,
               validate, validateWeb, template
         ) {
             
        var comboGrid = declare([OnDemandGrid, Selection, Keyboard]);
+       var INVALID_MESSAGE = "Entry is invalid.";
        
        var wid = declare("rc.widgets.common.AssocWidget", [WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin], {
            
@@ -44,9 +46,11 @@ define([
            columns: null,
            idProperty: "",
            data: null,
+           origData: null,
            fieldStores: null,
            assocTitle: "",
            inactivesVisible: false,
+           columnDef: null,
            
            postMixInProperties: function() {
                this.inherited(arguments);
@@ -55,7 +59,9 @@ define([
            
            postCreate: function() {
                this.inherited(arguments);
-               this.store = new Observable(new Memory({idProperty:this.idProperty, queryEngine: jsArray.query, data: this.data}));
+               this.origData = dojo.clone(this.data);
+               this.store = new Observable(new BasicStore({idProperty:this.idProperty, 
+                    queryEngine: jsArray.query, data: this.data, timestamps: ['fromDate', 'thruDate']}));
                //this.loadFieldStores(this.fieldStoreIds);
                this.columns = this.buildColumns(this.columnDef);
                //this.header = this.buildHeader(this.columnDef);
@@ -82,7 +88,21 @@ define([
                return;
            },
            
+           setData: function(data) {
+               this.data = data;
+               this.origData = dojo.clone(this.data);
+               var _this = this;
+               this.store = new Observable(new BasicStore({idProperty:this.idProperty, 
+                queryEngine: jsArray.query, data: this.data, timestamps: ['fromDate', 'thruDate']}));
+               this.grid.setStore(this.store, null, null);
+               window.setTimeout(function() {
+                    _this.grid.resize();
+               }, 1000);
+               return;
+           },
+           
            showEditForm: function() {
+               //this.editForm.reset();
                domStyle.set(this.gridContainer, "display", "none");
                domStyle.set(this.formContainer, "display", "block");
                return;
@@ -90,6 +110,9 @@ define([
            
            saveEditForm: function() {
                var values = this.editForm.get("value");
+               if(!values[this.idProperty]) {
+                   delete values[this.idProperty]; //Remove so store will generate id
+               }
                this.grid.store.put(values);
                domStyle.set(this.gridContainer, "display", "block");
                domStyle.set(this.formContainer, "display", "none");
@@ -228,10 +251,20 @@ define([
                            });
                            domConstruct.place(cntrl.domNode, fld);
                        } else {
-                           cntrl = new TextBox({
+                           var options = {
                                name: fieldDef.field,
                                placeHolder: fieldDef.placeholder ? fieldDef.placeholder : fieldDef.label
-                           });
+                           };
+                           if (fieldDef.validator) {
+                               options.validator = fieldDef.validator;
+                           }
+                           if (fieldDef.constraints) {
+                               options.constraints = fieldDef.constraints;
+                           }
+                           if (fieldDef.invalidMessage) {
+                               options.invalidMessage = fieldDef.invalidMessage;
+                           }
+                           cntrl = new ValidationTextBox(options);
                            domConstruct.place(cntrl.domNode, fld);
                        }
                    }, this);
@@ -262,6 +295,11 @@ define([
                                type: "hidden"
                            });
                            domConstruct.place(cntrl2.domNode, form.domNode);
+                    var cntrlKey = new TextBox({
+                               name: this.idProperty,
+                               type: "hidden"
+                           });
+                           domConstruct.place(cntrlKey.domNode, form.domNode);
                }, this);
                return header;
            },
@@ -308,6 +346,58 @@ define([
                    this.grid.store.put(cell.row.data);
                }
                return;
+           },
+           
+           _getValueAttr: function() {
+               var dataResults = this.store.query(null, {});
+               returnArray = [];
+               dataResults.forEach(function(row) {
+                   var origRow = this.getOrigRow(row);
+                   if(!origRow) {
+                       if (!row.thruDate) {
+                           row[this.store.idProperty] = null
+                           returnArray.push(row);
+                       }
+                   } else {
+                       if (this.isRowChanged(origRow, row)) {
+                           returnArray.push(row);
+                       }
+                   }
+               }, this);
+               return returnArray;
+           },
+           
+           isRowChanged: function(origRow, targRow) {
+               var origVal, targVal, isChanged = false;
+               array.forEach(this.columnDef[0], function(fld) {
+                   origVal = origRow[fld.field];
+                   targVal = targRow[fld.field];
+                   if ((origVal && !targVal) ||
+                        (!origVal && targVal) ||
+                        (origVal !== targVal)) {
+                            isChanged = true;
+                    }
+               }, this);
+               if(!isChanged) {
+                   origVal = origRow["thruDate"];
+                   targVal = targRow["thruDate"];
+                   if ((origVal && !targVal) ||
+                        (!origVal && targVal) ||
+                        (origVal !== targVal)) {
+                            isChanged = true;
+                    }
+               }
+               return isChanged;
+           },
+           
+           getOrigRow: function(row) {
+               var returnRow = null
+               array.forEach(this.origData, function(targRow) {
+                   if (targRow[this.store.idProperty] == row[this.store.idProperty]) {
+                       returnRow = targRow;
+                   }
+               }, this);
+               return returnRow;
            },
            
            eof: function() {
