@@ -37,24 +37,24 @@
             height: 100%;
             width: 100%;
             display: none;
-            background-color: #AFA !important;
+            background-color: #FFA !important;
         }
         #PartyTabContainer .dgridmod-footer {
             height: 100%;
             width: 100%;
             display: none;
-            background-color: #FAA !important;
+            background-color: #DDF !important;
         }
         #PartyTabContainer .dgridmod-center {
             height: 100%;
             width: 100%;
             display: block;
-            background-color: #AAF !important;
+            background-color: #DDD !important;
         }
         .assoc-grid-container {
             height: auto;
             margin: 20px;
-            border: 1px solid purple;
+            border: none;
         }
         
         .assoc-grid {
@@ -70,12 +70,19 @@
             border: none;
         }
         
+        .assoc-grid-title {
+            font-weight: bold;
+            font-size: 18px;
+        }
         .assoc-grid-form {
             width:100%; 
             height: auto; 
             display: none;
             border: none;
-        }
+  -webkit-box-shadow: 0 1px 8px rgba(0, 0, 0, 0.50);
+  -moz-box-shadow: 0 1px 8px rgba(0, 0, 0, 0.50);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.50);
+  }
         
     .assoc-grid-container .dgrid {
             height: auto;
@@ -148,7 +155,7 @@
     }
     
     .party-product {
-        width: 45%;
+        width: 30%;
         height: 160px;
     }
     
@@ -159,6 +166,10 @@
     
     .party-product .dgrid .dgrid-scroller {
         overflow: auto;
+        }
+        
+    .party-product .dgrid-selector,  .party-product .dgrid-column-0{
+        width: 60px;
         }
         
     .locator-grid .field-organizationName {
@@ -174,3 +185,67 @@
     .locator-grid .dgrid-cell {
         border: none;
     }
+    
+    .error-tooltip {
+        width: 400px;
+        height: 200px;
+        background-color: #FF6;
+        display: none;
+    }
+
+    .assoc-action-button {
+        float: right;
+    }
+
+    #postalGridContainer {
+        width: 1300px;
+    }
+
+    #phoneGridContainer {
+        width: 450px;
+    }
+
+    #emailGridContainer {
+        width: 450px;
+    }
+
+    #webGridContainer {
+        width: 400px;
+    }
+    
+    #MainPartyGrid .dgrid-column-0 {
+        width: 60px;
+    }
+
+    #MainPartyGrid .dgrid-row {
+        font-weight: bold;
+        font-size: 16px;
+    }    
+    
+    .detail-form {
+        font-weight: bold;
+        font-size: 20px;
+    }    
+    
+    #MainPartyGrid .dgrid-row-odd {
+        background: #F2F5F9;
+    }
+    
+.loadingOverlay {
+    background:  #fff url('/dojo/dijit/themes/claro/images/loadingAnimation.gif') no-repeat 10px 23px;
+    position: absolute;
+    z-index: 1001;
+    display: block;
+}
+ 
+.pageOverlay {
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+}
+ 
+.loadingMessage {
+    padding: 25px 40px;
+    color: #999;
+}

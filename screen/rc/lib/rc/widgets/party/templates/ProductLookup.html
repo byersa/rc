@@ -1,0 +1,17 @@
+<div class="dijitDialog" role="dialog" aria-labelledby="${id}_title">
+	<div data-dojo-attach-point="titleBar" class="dijitDialogTitleBar">
+		<span data-dojo-attach-point="titleNode" class="dijitDialogTitle" id="${id}_title"
+				role="heading" level="1"></span>
+		<span data-dojo-attach-point="closeButtonNode" class="dijitDialogCloseIcon" data-dojo-attach-event="ondijitclick: onCancel" title="${buttonCancel}" role="button" tabindex="0">
+			<span data-dojo-attach-point="closeText" class="closeText" title="${buttonCancel}">x</span>
+		</span>
+	</div>
+	<div data-dojo-attach-point="containerNode" class="dijitDialogPaneContent">
+        <div data-dojo-type="dijit/Toolbar" class="dgridmod-toolbar" >
+            <div data-dojo-type="dijit/form/CheckBox"></div>
+            <div data-dojo-type="dijit/form/Button" name="acceptButton" data-dojo-attach-point="acceptButton" type="button">OK</div>
+            <div data-dojo-type="dijit/form/Button" name="cancelButton" data-dojo-attach-point="cancelButton" type="button">Cancel</div>
+        </div>
+        <div data-dojo-attach-point="gridNode" style="width:100%;"></div>
+	</div>
+</div>

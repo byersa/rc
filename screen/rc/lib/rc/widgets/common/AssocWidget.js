@@ -7,6 +7,7 @@ define([
         'dojo/query',
         'dojo/on',
         'dojo/_base/array',
+        "dojo/dom-class",
         'dijit/_WidgetBase',
         'dijit/_TemplatedMixin',
         'dijit/_WidgetsInTemplateMixin',
@@ -28,8 +29,9 @@ define([
         'dojox/validate/web',
         'dojo/text!./templates/AssocWidget.html'
 
-        ], function(declare, lang, domStyle, domConstruct, registry, query, on, array,
-                WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
+        ], function(declare, lang, domStyle, domConstruct, registry, 
+            query, on, array, domClass,
+            WidgetBase, _TemplatedMixin, _WidgetsInTemplateMixin,
               Observable, OnDemandGrid, Selection, Keyboard, selector,
               BasicStore, ObjectStore, jsArray,
               ValidationTextBox, TextBox, Select, Button, FilteringSelect, Form,
@@ -51,6 +53,7 @@ define([
            assocTitle: "",
            inactivesVisible: false,
            columnDef: null,
+           errorMsgs: null,
            
            postMixInProperties: function() {
                this.inherited(arguments);
@@ -59,6 +62,7 @@ define([
            
            postCreate: function() {
                this.inherited(arguments);
+               domClass.add(this.domNode, "dojoFormValue");
                this.origData = dojo.clone(this.data);
                this.store = new Observable(new BasicStore({idProperty:this.idProperty, 
                     queryEngine: jsArray.query, data: this.data, timestamps: ['fromDate', 'thruDate']}));
@@ -78,7 +82,8 @@ define([
               //options.query = '(thruDate=null|thruDate=)';
               options.query = 'or(eq(thruDate,null),eq(thruDate,))';
                this.grid = new comboGrid(options, this.gridContainer);
-               domConstruct.place(this.form, this.formContainer);
+               this.styleColumns(this.columnDef);
+               domConstruct.place(this.form.domNode, this.formContainer);
                this.grid.on(".dgrid-cell:click", lang.hitch(this, "handleGridClick"));
                
                query("input[name=addAssocButton]", this.domNode).on("click", lang.hitch(this, "showEditForm"));
@@ -88,7 +93,7 @@ define([
                return;
            },
            
-           setData: function(data) {
+           _setValueAttr: function(data) {
                this.data = data;
                this.origData = dojo.clone(this.data);
                var _this = this;
@@ -183,6 +188,16 @@ define([
                return columnStruct;
            },
            
+           styleColumns: function(columnDef) { 
+               dojo.forEach(columnDef, function(defList, idx) {
+                   dojo.forEach(defList, function(fieldDef) {
+                       this.grid.addCssRule(".field-" + fieldDef.field, "width: " + fieldDef.width + "px;");
+                   }, this);
+               }, this);
+                this.grid.addCssRule(".field-" + this.idProperty, "width: 80px;");
+               return;
+           },
+           
            buildHeader: function(columnDef) { 
                var header = domConstruct.create("div");
                var table = domConstruct.create("table", null, header);
@@ -198,9 +213,9 @@ define([
            },
            
            buildForm: function(columnDef) { 
-                var header = domConstruct.create("div");
+                //var header = domConstruct.create("div");
                 var form = this.editForm = new Form({name: "editForm", action: "javascript:void(0)"});
-                domConstruct.place(form.domNode, header);               
+                domConstruct.place(form.domNode, this.formContainer);               
                 var table = domConstruct.create("table", null, form.domNode);
                 var tbody = domConstruct.create("tbody", null, table);
                 // build header
@@ -241,6 +256,7 @@ define([
                                name: fieldDef.field,
                                label: fieldDef.label,
                                labelAttr: fieldDef.labelAttr,
+                               sortByLabel: !!fieldDef.sortField,
                                store: aStore
                            });
                            domConstruct.place(cntrl.domNode, fld);
@@ -271,7 +287,7 @@ define([
                    // save/cancel buttons in body
                    if(idx === 0) {
                        var fld = domConstruct.create("td", null, row);
-                       var btn = new Button({name: "assocSaveBtn", label: "Save"});
+                       var btn = new Button({name: "assocSaveBtn", label: "OK"});
                        domConstruct.place(btn.domNode, fld);
                        if (columnDef.length === 1 ) {
                            var fld2 = domConstruct.create("td", null, row);
@@ -301,7 +317,7 @@ define([
                            });
                            domConstruct.place(cntrlKey.domNode, form.domNode);
                }, this);
-               return header;
+               return form;
            },
            
 			renderEditButton: function (object, data, td, options){
@@ -346,6 +362,10 @@ define([
                    this.grid.store.put(cell.row.data);
                }
                return;
+           },
+           
+           getErrorMessages: function() {
+               return this.errorMsgs;
            },
            
            _getValueAttr: function() {
@@ -398,6 +418,29 @@ define([
                    }
                }, this);
                return returnRow;
+           },
+           
+           validate: function() {
+               var displayStyle = domStyle.get(this.formContainer, "display");
+               if (displayStyle != "hidden") {
+                   return true;
+               }
+               this.errorMsgs = [];
+               var isValid = true;
+               var textBox, validResponse, errMsg;
+               var validationTextBoxes = query(".dijitValidationTextBox", this.formContainer);
+               validationTextBoxes.forEach(function(nd) {
+                   textBox = registry.getEnclosingWidget(nd);
+                   if (textBox) {
+                       validResponse = textBox.validate();
+                       if (!validResponse) {
+                           isValid = false;
+                           errMsg = textBox.getErrorMessage();
+                           this.errorMsgs.push(errMsg);
+                       }
+                   }
+               }, this);
+               return isValid;
            },
            
            eof: function() {

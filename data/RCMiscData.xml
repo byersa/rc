@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<entity-facade-xml type="seed">
+    <Geo geoId="USA_DUMMY" geoName=" - " geoTypeEnumId="GEOT_STATE" geoCodeAlpha2=""/>
+    <RoleType description="Reseller - Online Reseller" parentTypeId="Reseller" roleTypeId="ResellerOnline"/>
+    <RoleType description="Reseller - Retail Reseller" parentTypeId="Reseller" roleTypeId="ResellerRetail"/>
+</entity-facade-xml>

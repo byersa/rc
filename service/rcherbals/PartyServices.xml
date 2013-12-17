@@ -73,6 +73,7 @@
 	        <parameter name="lastName" required="false"/>
 	        <parameter name="organizationName" required="false"/>
 	        <parameter name="emailAddress" required="false"/>
+	        <parameter name="webAddress" required="false"/>
 	        <parameter name="contactNumber" required="false"/>
 	        <parameter name="city" required="false"/>
 	        <parameter name="stateProvinceGeoId" required="false"/>
@@ -272,6 +273,67 @@
                 </if>
             </iterate>
 
+            <iterate list="webData" entry="web">
+                <log message="storeParty web  ( edit):  ${web}"/>
+                <if condition="web.contactMechId">
+                    <then>
+                        <log message="web.contactMechId  (0):  ${web.contactMechId}"/>
+                        <set field="thisContactMechId" from="web.contactMechId"/>
+                        <log message="thisContactMechId  (0):  ${thisContactMechId}"/>
+                        <entity-find entity-name="PartyContactMech" list="webAddressList">
+                            <econditions>
+                                <econdition field-name="partyId" from="party.partyId"/>
+                                <econdition field-name="contactMechId" from="thisContactMechId"/>
+                            </econditions>
+                        </entity-find>
+                        <check-errors/>
+                        <log message="webAddressList:  ${webAddressList}"/>
+                        <set field="webAddress" from="webAddressList ?  webAddressList[0]  :  null"/>
+                        <if>
+                            <condition>
+                                    <expression>
+                                    !((web.infoString == webAddress.infoString) 
+                                        &amp;&amp; (web.contactMechPurposeId == webAddress.contactMechPurposeId)
+                                        &amp;&amp; (web.fromDate == webAddress.fromDate)
+                                        &amp;&amp; (web.thruDate == webAddress.thruDate)
+                                        )
+                                    </expression>                                
+                            </condition>
+                            <then>
+                                <set field="web.partyId" from="party.partyId"/>
+                                <log message="web  4:  ${web},  party.partyId:  ${party.partyId}"/>
+                            
+                                <service-call name="mantle.party.ContactServices.update#PartyContactOther" in-map="web" out-map="webOut">
+                                </service-call>
+                                <log message="webOut  4:  ${webOut}"/>
+                                <check-errors/>
+                            </then>
+                        </if>
+                    </then>
+                    <else>
+                        <set field="web.partyId" from="party.partyId"/>
+                        <set field="web.contactMechTypeEnumId" value="CmtWebAddress"/>
+                        <entity-make-value entity-name="ContactMech" value-field="contactMech"/>
+                        <entity-sequenced-id-primary value-field="contactMech"/>
+                        <set field="contactMech.infoString" from="web.infoString"/>
+                        <set field="contactMech.contactMechTypeEnumId" value="CmtWebAddress"/>
+                        <entity-create value-field="contactMech"/>
+                        <log message="web  (contactMech  1):  ${contactMech}"/>
+                        <check-errors/>
+                        
+                        <entity-make-value entity-name="PartyContactMech" value-field="partyContactMech"/>
+                        <set field="partyContactMech.partyId" from="party.partyId"/>
+                        <set field="partyContactMech.contactMechId" from="contactMech.contactMechId"/>
+                        <set field="partyContactMech.contactMechPurposeId" from="web.contactMechPurposeId"/>
+                        <set field="partyContactMech.fromDate" from="ec.user.nowTimestamp"/>
+                        <entity-create value-field="partyContactMech"/>
+                        <log message="web  partyContactMech 2:  ${partyContactMech}"/>
+                        <check-errors/>
+                        <set field="web.contactMechId" from="contactMech.contactMechId"/>
+                    </else>
+                </if>
+            </iterate>
+            
             <iterate list="emailData" entry="email">
                 <log message="storeParty email  ( edit):  ${email}"/>
                 <if condition="email.contactMechId">

@@ -8,8 +8,6 @@
         <actions>
             <script><![CDATA[
             import groovy.json.JsonSlurper
-            
-
             ec.artifactExecution.disableAuthz()            
             org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("addNewParty")
             logger.info("in addNewParty 2, data: ${ec.web.parameters}")
@@ -17,6 +15,7 @@
             ec.web.parameters.postalData = slurper.parseText(ec.web.parameters.postalData)
             ec.web.parameters.phoneData = slurper.parseText(ec.web.parameters.phoneData)
             ec.web.parameters.emailData = slurper.parseText(ec.web.parameters.emailData)
+            ec.web.parameters.webData = slurper.parseText(ec.web.parameters.webData)
             if (!ec.web.parameters.parentPartyId) { ec.web.parameters.parentPartyId = 'RCHERBALS'}
             logger.info("in addNewParty 3, ec.web.parameters: ${ec.web.parameters}")
             ]]></script>
@@ -92,6 +91,7 @@
             ec.web.parameters.postalData = slurper.parseText(ec.web.parameters.postalData)
             ec.web.parameters.phoneData = slurper.parseText(ec.web.parameters.phoneData)
             ec.web.parameters.emailData = slurper.parseText(ec.web.parameters.emailData)
+            ec.web.parameters.webData = slurper.parseText(ec.web.parameters.webData)
             if (!ec.web.parameters.parentPartyId) { ec.web.parameters.parentPartyId = 'RCHERBALS'}
             logger.info("in updateParty 3, ec.web.parameters: ${ec.web.parameters}")
             ]]></script>
@@ -146,11 +146,19 @@
         <actions>
             <script><![CDATA[
             import org.moqui.entity.EntityCondition
+            import org.moqui.entity.EntityValue
 
             ec.artifactExecution.disableAuthz()            
             org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger("getStateLookup")
             logger.info("in getStateLookup, data: ${ec.web.parameters}")
-            List states = ec.entity.makeFind("Geo").condition("geoId", EntityCondition.LIKE, 'USA_%').list()
+            List <EntityValue> states = ec.entity.makeFind("Geo").condition("geoTypeEnumId", EntityCondition.EQUALS, 'GEOT_STATE').orderBy("geoName").list()
+            //logger.info("in getStateLookup, states2: ${states}")
+            //EntityValue dummy = ec.entity.makeValue("Geo")
+            //dummy.geoId = "DUMMY"
+            //dummy.geoName = " - "
+            //Map dummy = [geoId:"DUMMY", geoName: " - "]
+            logger.info("in getStateLookup, dummy: ${dummy}")
+            //List <EntityValue> states = dummy + states2
             //def edv = ef.makeEntityDynamicView()
             //def ecf = ec.entity.getConditionFactory()
             //edv.addMemberEntity("GEOASSOC", "GeoAssoc", null, null, null)

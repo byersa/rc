@@ -72,6 +72,7 @@ define([
                                name: "stateProvinceGeoId",
                                label: "State",
                                labelAttr: "geoName",
+                               sortByLabel: false,
                                store: stateStore
                            });
                 domConstruct.place(cntrl.domNode, this.locatorSelect);
@@ -196,7 +197,7 @@ define([
                 if (values.postalCode) {
                     queryContent.postalCode = values.postalCode;
                 }
-                if (values.stateProvinceGeoId) {
+                if (values.stateProvinceGeoId && values.stateProvinceGeoId != "USA_DUMMY") {
                         queryContent.state = values.stateProvinceGeoId.substring(4);
                         queryContent.city = values.city;
                 }

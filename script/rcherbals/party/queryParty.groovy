@@ -117,8 +117,17 @@ import org.moqui.impl.StupidUtilities
             edv.addMemberEntity("PTY_CNTC_MECH_EMAIL", "PartyContactMech", this.masterJoinAlias, false, ['partyId':'partyId'])
             edv.addAliasAll("PTY_CNTC_MECH_EMAIL", "emailCntct")
             edv.addMemberEntity("CNTC_MECH", "ContactMech", "PTY_CNTC_MECH_EMAIL", true, ['contactMechId':'contactMechId'])
-            edv.addAliasAll("CNTC_MECH", null)
+            edv.addAliasAll("CNTC_MECH", "email")
             EntityConditionImplBase cond = ecf.makeCondition("emailInfoString", EntityCondition.LIKE, context.emailAddress)
+            condList.push(cond)
+        } 
+        
+    if (context.webAddress) {
+            edv.addMemberEntity("PTY_CNTC_MECH_WEB", "PartyContactMech", this.masterJoinAlias, false, ['partyId':'partyId'])
+            edv.addAliasAll("PTY_CNTC_MECH_WEB", "emailCntct")
+            edv.addMemberEntity("CNTC_MECH_WEB", "ContactMech", "PTY_CNTC_MECH_WEB", true, ['contactMechId':'contactMechId'])
+            edv.addAliasAll("CNTC_MECH_WEB", "web")
+            EntityConditionImplBase cond = ecf.makeCondition("webInfoString", EntityCondition.LIKE, context.webAddress)
             condList.push(cond)
         } 
         
@@ -172,6 +181,7 @@ import org.moqui.impl.StupidUtilities
         filteredList = partyViewEntityList; 
     }
     if (context.emailAddress) { filteredList = filteredList.filterByDate("emailCntctFromDate", "emailCntctThruDate", null) }
+    if (context.webAddress) { filteredList = filteredList.filterByDate("webCntctFromDate", "webCntctThruDate", null) }
     if (context.contactNumber) { filteredList = filteredList.filterByDate("telecomCntctFromDate", "telecomCntctThruDate", null) }
     if (context.city || context.stateProvinceGeoId || postalCode) { filteredList = filteredList.filterByDate("postalCntctFromDate", "postalCntctThruDate", null) }
         logger.info("In: queryParty, query on Party and Organization, filteredList(${filteredList.size()}: ${filteredList}")
@@ -194,6 +204,7 @@ import org.moqui.impl.StupidUtilities
 
         }
         List <EntityValue> partyMapList = ec.entity.makeFind("PartyContactMech").condition("partyId", party.partyId).list()
+        logger.info("In: queryParty, partyMapList: ${partyMapList}")
         partyMapList.each() {partyContactMech ->
             switch(partyContactMech.contactMechPurposeId){
                 case ["PhonePrimary","PhoneShippingOrigin","PhoneShippingDest"]:
@@ -232,6 +243,19 @@ import org.moqui.impl.StupidUtilities
                                              ]) 
                         }
                         partyMap["emailData"] = emailData
+                    }
+                    break;
+                case ["WebUrlPrimary"]:
+                    List <EntityValue> webList = ec.entity.makeFind("ContactMech").condition("contactMechId", partyContactMech.contactMechId).list()
+                    if (webList.size()) {
+                        List webData = []
+                        webList.each() {webAddress ->
+                             webData.push([contactMechId: partyContactMech.contactMechId, contactMechPurposeId:partyContactMech.contactMechPurposeId, \
+                                            fromDate: partyContactMech.fromDate, thruDate:partyContactMech.thruDate, \
+                                             infoString: webAddress.infoString \
+                                             ]) 
+                        }
+                        partyMap["webData"] = webData
                     }
                     break;
                 default:

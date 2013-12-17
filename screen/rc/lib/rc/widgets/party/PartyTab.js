@@ -11,6 +11,7 @@ define([
         'dojo/dom-attr',
         'dojox/html/_base',
         'dojo/json',
+        'dijit/popup',
         'dojo/_base/array',
         'dojo/dom-style',
         'dojo/dom-geometry',
@@ -22,6 +23,7 @@ define([
     'dijit/layout/BorderContainer',
     'dojo/text!./templates/PartyTab.html',
     'rc/widgets/common/AssocWidget',
+    'rc/widgets/common/AssocProduct',
     'rc/modules/BasicStore',
     'rc/modules/RWStore',
     'rc/modules/util/agutils',
@@ -39,6 +41,7 @@ define([
     'dijit/form/FilteringSelect',
     'dojox/validate',
     'dojox/validate/web',
+    'dojox/validate/regexp',
     'dijit/layout/ContentPane',
     'dijit/_WidgetBase',
     'dijit/Toolbar',
@@ -47,11 +50,15 @@ define([
     'dijit/form/Form',
     'dijit/form/RadioButton',
     'dijit/Dialog',
-    'rc/widgets/party/ProductLookup'
-], function(declare, string, query, registry, lang, on, request, html, dom, domAttr, htmlUtil, JSON, 
-            array, domStyle, domGeometry, domConstruct, when, Deferred, _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
-            AssocWidget, BasicStore, RWStore, agutils, Observable, OnDemandGrid, Selection, Keyboard, selector, editor,
-            Memory, JsonRest, ValidationTextBox, TextBox, Select, FilteringSelect, validate, webValidate, ContentPane, WidgetBase
+    'rc/widgets/party/ProductLookup',
+    'dojox/form/Manager'
+], function(declare, string, query, registry, lang, on, request, html, dom, domAttr, htmlUtil, JSON, popup,
+            array, domStyle, domGeometry, domConstruct, when, Deferred, 
+            _TemplatedMixin, _WidgetsInTemplateMixin, BorderContainer, template,
+            AssocWidget, AssocProduct, BasicStore, RWStore, agutils, Observable, OnDemandGrid, Selection, 
+            Keyboard, selector, editor,
+            Memory, JsonRest, ValidationTextBox, TextBox, Select, FilteringSelect, validate, 
+            webValidate, regexpValidate, ContentPane, WidgetBase
             ) {
                 
     var comboGrid = declare([OnDemandGrid, Selection, Keyboard]);
@@ -69,6 +76,8 @@ define([
         productStoreUrl: '/product/queryProduct',
         allProductRows: null,
         productRows: null,
+        createForm: null,
+        editForm: null,
 						
         constructor: function() {
             return;
@@ -111,6 +120,12 @@ define([
 	                     { name: "Fax", id: "PhoneFax" }
                         ]});
                 registry.add(this.phonePurposeStore);
+                this.webPurposeStore = new Memory({idProperty: "id",
+                        id: "webPurposeStore",
+                        data: [
+	                     { name: "Primary", id: "WebUrlPrimary" },
+                        ]});
+                registry.add(this.webPurposeStore);
             this.stateStore = registry.byId("stateStore");
             if(!this.stateStore) {
                 this.stateStore = new BasicStore({idProperty: "geoId",
@@ -120,7 +135,7 @@ define([
                 registry.add(this.stateStore);
             }
             console.log("gridNode: " + this.gridNode);
-            this.grid = new comboGrid({store: this.store, columns: this.getMainColumns()}, this.gridNode);
+            this.grid = new comboGrid({store: this.store, columns: this.getMainColumns(), id: "MainPartyGrid"}, this.gridNode);
 
             this.postalGrid = new AssocWidget({columnDef: this.getPostalColumns(), assocTitle: "POSTAL ADDRESS",
                                 idProperty: "contactMechId"}, this.postalGridNode);
@@ -134,49 +149,32 @@ define([
             this.webGrid = new AssocWidget({columnDef: this.getWebColumns(), assocTitle: "WEB SITE",
                                 idProperty: "contactMechId"}, this.webGridNode);
             
-            _this.productGrid = new comboGrid({columns: _this.getProductColumns()}, _this.productGridNode);
-            _this.productGrid.startup();
-            _this.productQueryGrid = new comboGrid({columns: _this.getProductColumns()}, _this.productQueryGridNode);
-            _this.productQueryGrid.startup();
+            // _this.productGrid = new comboGrid({columns: _this.getProductColumns()}, _this.productGridNode);
+            // _this.productGrid.startup();
+            // _this.productQueryGrid = new comboGrid({columns: _this.getProductColumns()}, _this.productQueryGridNode);
+            // _this.productQueryGrid.startup();
+            _this.productGrid = new AssocProduct({}, this.productContainer);
+            _this.productQueryGrid = new AssocProduct({}, this.productQueryContainer);
             
             this.resizeGrids();
             
-                var xhrDeferred = request(this.productStoreUrl,{
-                    handleAs: "json",
-                    method: "POST",
-                    timeout: 10000
-                });
-                xhrDeferred.then(function(data) {
-                    console.log("success: " + JSON.stringify(data.items));
-                    _this.productRows = [];
-                    _this.allProductRows = data.items;
-                    var basicStore = new BasicStore({
-                        id: _this.id + '-productStore',
-                        data: data.items,
-                        idProperty: "productId",
-                        timestamps: ['fromDate', 'thruDate']
-                        });
-                    _this.productStore = new Observable(basicStore);
-                    _this.productGrid.startup();
-                    _this.productGrid.setStore(_this.productStore);
-                    _this.productQueryGrid.startup();
-                    _this.productQueryGrid.setStore(_this.productStore);
-                    window.setTimeout(function() {
-                        _this.productGrid.resize();
-                        _this.productQueryGrid.resize();
-                    }, 1000);
-                    return;
-                },
-                function(err) {
-                    console.log("err: " + err.toString());
-                });
-            query("#emailGridAdd", this.domNode).on("click", lang.hitch(_this, "addEmailRow"));
+           var cntrl = new Select({
+               name: "stateProvinceGeoId",
+               labelAttr: "geoName",
+               sortByLabel: false,
+               store: this.stateStore
+           });
+           domConstruct.place(cntrl.domNode, this.queryStateProvinceGeoId);
+           
             query("input[name=saveDetail]", this.domNode).on("click", lang.hitch(_this, "submitDetailForm"));
             query("input[name=cancelDetail]", this.domNode).on("click", lang.hitch(_this, "cancelDetailForm"));
             query("input[name=showCreateButton]", this.domNode).on("click", lang.hitch(_this, "showCreateForm"));
             this.grid.on(".dgrid-row:dblclick", lang.hitch(this, "handleDblClick"));  
             query("input[name=queryButton]", this.domNode).on("click", lang.hitch(_this, "showQueryForm"));
             query("input[name=querySubmit]", this.domNode).on("click", lang.hitch(_this, "submitQueryForm"));
+            query("input[name=queryCancel]", this.domNode).on("click", lang.hitch(_this, function(evt) {
+                    this.displayScreen("center");
+                }));
             
             return;
         },
@@ -186,15 +184,9 @@ define([
             this.grid.startup();
             
             this.postalGrid.startup();
-            //this.addPostalRow();
-            
             this.phoneGrid.startup();
-            //this.addPhoneRow();
-            
             this.emailGrid.startup();
-            //this.addEmailRow();
-            
-            //this.addPartyData();
+            this.webGrid.startup();
             return;
         },
         
@@ -210,9 +202,10 @@ define([
         
         clearDetailScreen: function() {
             this.productGrid.clearSelection();
-            this.postalGrid.setData([]);
-            this.emailGrid.setData([]);
-            this.phoneGrid.setData([]);
+            this.postalGrid.set("value", []);
+            this.emailGrid.set("value", []);
+            this.phoneGrid.set("value", []);
+            this.webGrid.set("value", []);
             return;
         },
         
@@ -277,14 +270,15 @@ define([
             if (submitValues.emailAddress) { submitValues.emailAddress += "%"; }
             if (submitValues.address1) { submitValues.address1 += "%"; }
             if (submitValues.city) { submitValues.city += "%"; }
+            if (submitValues.stateProvinceGeoId === "USA_DUMMY") {
+                delete submitValues.stateProvinceGeoId
+            }
             // handle products
-            var productArray = [];
-            for (var prodId in this.productQueryGrid.selection) {
-                productArray.push(prodId);
-            }
-            if (productArray.length) {
-                submitValues["productIdList"] = JSON.stringify(productArray);
-            }
+            var productArray2 = this.productQueryGrid.get("value");
+            var productArray = array.map(productArray2, function(productEntity) {
+                return productEntity.productId;
+            }, this);
+            submitValues.productIdList = JSON.stringify(productArray);
             submitValues.toPartyId = "RCHERBALS";
             console.log("PartyTab (query), submitValues: " + JSON.stringify(submitValues));
             var store = new BasicStore({
@@ -319,6 +313,7 @@ define([
             this.postalGrid.setStore( this.postalStore);
             this.emailGrid.setStore( this.emailStore);
             this.phoneGrid.setStore( this.phoneStore);
+            this.webGrid.setStore( this.webStore);
             return;
         },
         
@@ -326,50 +321,13 @@ define([
             this.postalGrid.resize();
             this.emailGrid.resize();
             this.phoneGrid.resize();
+            this.webGrid.resize();
             return;
-        },
-        
-        addPartyData: function() {
-            var partyTypeEnumId =  ["PtyPerson", "PtyOrganization"][Math.floor(Math.random() * 2)];
-            var firstName =  "First_" + Math.floor(Math.random() * 2000);
-            var lastName =  "Last_" + Math.floor(Math.random() * 2000);
-            var orgName =  "Org_" + Math.floor(Math.random() * 2000);
-            this.createForm.set("value", {
-                partyTypeEnumId: partyTypeEnumId,
-                firstName: firstName,
-                lastName: lastName,
-                organizationName: orgName
-            });
-            console.log("form values: " + JSON.stringify(this.createForm.get("value")));
-            return;
-        },
-        
-        addPhoneRow: function(evt) {
-            this.phoneGrid.store.put({
-                contactNumber: Math.floor(Math.random() * 10) + "01-45"  + Math.floor(Math.random() * 10) + "-123" + Math.floor(Math.random() * 10)
-                });
-            this.phoneGrid.resize();
-        },
-        
-        addPostalRow: function(evt) {
-            var contactMechId = this.postalGrid.store.put({
-                address1: Math.round(Math.random() * 1000) +  " Address Street",
-                postalCode: "1234" + Math.floor(Math.random() * 10),
-                city: 'Provo', //["NYC", "Orem", "Pittsburgh", "Mt. Lebanon"][Math.floor(Math.random() * 4)],
-                stateProvinceGeoId: 'USA_PA'
-                });
-            this.postalGrid.resize();
-        },
-        
-        addEmailRow: function(evt) {
-            this.emailGrid.store.put({
-                infoString: "email." + Math.round(Math.random() * 1000) + "@nomail.com"
-                });
-            this.emailGrid.resize();
         },
         
         getMainColumns: function() {
             return [
+                            selector({label:'Select'}, "checkbox"),
 							{field: 'partyId', label:'Name', sortable: true, formatter: this.fullNameFormatter},
 							{field: 'partyTypeEnumId', label: 'Party Type', sortable: true, formatter: this.partyTypeFormatter},
 							{field: 'emailData', label: 'Email', sortable: false, formatter: this.emailDataFormatter},
@@ -378,16 +336,18 @@ define([
 							{field: 'postalData', label: 'State', renderCell: lang.hitch(this, "stateRenderer")}
 					];
 			},
+			
         getPostalColumns: function() {
             return [
                         [
-							{field:'address1', label:'Address 1', width: "36"},
-						    {field:'address2', label:'Address 2', width: "36"},
-							{field:'city', label:'City', width: "36"},
-						    {field:'stateProvinceGeoId', label:'State', control: "select", storeId: "stateStore",labelAttr: "geoName", renderCell: lang.hitch(this, "stateRenderer"), width: "36"},
-						    {field:'postalCode', label:'Zip', width: "36", validator: dojox.validate.isNumberFormat, constraints: {format:['#####', '#####-####']},
-						                         invalidMessage: "Zip code must be in one of these formats: '#####' or '#####-####'."},
-							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "postalPurposeStore", labelAttr: "name", width: "36"}
+							{field:'address1', label:'Address 1', width: "180"},
+						    {field:'address2', label:'Address 2', width: "180"},
+							{field:'city', label:'City', width: "180"},
+						    {field:'stateProvinceGeoId', label:'State', control: "select", storeId: "stateStore",labelAttr: "geoName", renderCell: lang.hitch(this, "stateRenderer"), width: "80"},
+						    {field:'postalCode', label:'Zip', width: "120", validator: dojox.validate.isNumberFormat, constraints: {format:['#####', '#####-####']},
+						                         invalidMessage: "Zip code must be in one of these formats: '#####' or '#####-####'.",
+						                         placeholder: "##### or #####-####"},
+							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "postalPurposeStore", labelAttr: "name", width: "80"}
 						]
 					];
 			},
@@ -395,8 +355,10 @@ define([
         getPhoneColumns: function() {
             return [
                         [
-							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "phonePurposeStore",labelAttr: "name", width: "36"},
-						    {field:'contactNumber', label:'Phone Number', width: "36"}
+							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "phonePurposeStore",labelAttr: "name", width: "80"},
+						    {field:'contactNumber', label:'Phone Number', width: "180", validator: dojox.validate.isNumberFormat, constraints: {format:['###-###-####']},
+						                         invalidMessage: "Phone number must be in one of this format: '###-###-####'.",
+						                         placeholder: "###-###-####"}
 						]
 					];
 			},
@@ -404,8 +366,11 @@ define([
         getWebColumns: function() {
             return [
                         [
-							{field:'contactMechPurposeId', label:'Purpose', width: "36"},
-						    {field:'infoString', label:'Email', width: "36"}
+							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "webPurposeStore", labelAttr: "name", width: "80"},
+						    {field:'infoString', label:'Web Url', width: "180", 
+						                    regExp:'(https?|ftp)://[A-Za-z0-9-_]+\.[A-Za-z0-9-_%&\?\/\.=]+',
+						                         invalidMessage: "Must be in url format.",
+						                         placeholder: "webaddress.com"}
 						]
 					];
 			},
@@ -413,8 +378,10 @@ define([
         getEmailColumns: function() {
             return [
                         [
-							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "emailPurposeStore", labelAttr: "name", width: "36"},
-						    {field:'infoString', label:'Email', width: "36"}
+							{field:'contactMechPurposeId', label:'Purpose', control: "select", storeId: "emailPurposeStore", labelAttr: "name", width: "80"},
+						    {field:'infoString', label:'Email', width: "180", validator: dojox.validate.isEmailAddress, constraints: {format:['###-###-####']},
+						                         invalidMessage: "Must be in email format.",
+						                         placeholder: "name@email.com"}
 						]
 					];
 			},
@@ -426,8 +393,8 @@ define([
         
         getProductColumns: function() {
             return [
-							selector({label:'Select'}, "checkbox"),
-							{field: 'productName', label:'Product Name', sortable: true}
+						selector({label:'Select'}, "checkbox"),
+						{field: 'productName', label:'Product Name', sortable: true}
 					];
 			},
 			
@@ -445,6 +412,7 @@ define([
                 domStyle.set(this.editFormOrg, "display", "block");
             }
             this.displayScreen("bottom");
+            this.productGrid.resize();
             return;
         },
         
@@ -454,46 +422,8 @@ define([
             _this.productRows = [];
             this.showEditForm(row.data);
             this.detailMode = 'edit';
-            // if(this.currentRow) {
-            //     if (!agutils.isEqual(this.currentRow, row)) {
-            //         this.handleDirty("Edit", function() {
-            //             this.setEditFormData(row.data);
-            //         });
-            //     }
-            // } else {
-                 this.setEditFormData(row.data);
-            // }
-            var xhrDeferred = request(this.productStoreUrl,{
-                handleAs: "json",
-                data: {partyId: row.data.partyId},
-                method: "POST",
-                timeout: 10000
-            });
-            xhrDeferred.then(function(data) {
-                console.log("success: " + JSON.stringify(data.items));
-                _this.productRows = data.items;
-    		    array.forEach(_this.productRows, function(row) {
-    		        if (row.fromDate && typeof row.fromDate == "string") {
-    		            row.fromDate = new Date(row.fromDate);
-    		        }
-    		        if (row.thruDate && typeof row.thruDate == "string") {
-    		            row.thruDate = new Date(row.thruDate);
-    		        }
-    		    }, this);
-                var productIdList = array.map(data.items, function(row) {
-                    return row.productId;
-                });
-                _this.productGrid.clearSelection();
-	            var idPrefix = _this.productGrid.id + "-row-";
-                array.forEach(productIdList, function(id) {
-                    _this.productGrid.select(id);
-                });
-                _this.productGrid.resize();
-                return;
-            },
-            function(err) {
-                console.log("err: " + err.toString());
-            });
+            this.setEditFormData(row.data);
+            _this.productGrid.set("value", row.data.partyId);
             this.currentRow = row.data;
             return;
         },
@@ -515,9 +445,10 @@ define([
         setContactGrids: function(data) {
             //this.createContactStores(data);
            // this.setContactStores(data);
-            this.postalGrid.setData(data.postalData);
-            this.phoneGrid.setData(data.phoneData);
-            this.emailGrid.setData(data.emailData);
+            this.postalGrid.set("value", data.postalData);
+            this.phoneGrid.set("value", data.phoneData);
+            this.emailGrid.set("value", data.emailData);
+            this.webGrid.set("value", data.webData);
             return;
         },
         
@@ -606,17 +537,58 @@ define([
             return "X";
         },
         
+        validate: function() {
+            var isValid = true;
+            var validResponse, widgetErrMsgs;
+            var errorMsgs = [];
+            array.forEach([this.postalGrid, this.emailGrid, this.phoneGrid], function(assocWidget) {
+                validResponse = assocWidget.validate();
+                if (!validResponse) {
+                    isValid = false;
+                    widgetErrMsgs = assocWidget.getErrorMessages();
+                    errorMsgs = errorMsgs.concat(widgetErrMsgs);
+                };
+            }, this);
+            if(!isValid) {
+                var tooltip = registry.byId("ErrorTooltip");
+                tooltip.set("content", errorMsgs.join("<br/>"));
+                var aroundWid = registry.byId("main-container-header");
+               popup.open({
+                    parent: this,
+                    popup: tooltip,
+                    around: aroundWid.domNode,
+                    orient: ["below-centered"],
+                    onExecute: function(){
+                        popup.close(tooltip);
+                    },
+                    onCancel: function(){
+                        popup.close(tooltip);
+                    },
+                    onClose: function(){
+                    }
+                });
+            }
+            return isValid;
+        },
+        
         submitDetailForm: function(evt) {
+            
+            if (!this.validate()) {
+                return;
+            }
             
             var _this = this;
             // this setTimeout is needed to capture the entered values in the dgrid editor fields
             window.setTimeout( function() {
+                
                 var postalData = _this.postalGrid.get("value");
                 var phoneData = _this.phoneGrid.get("value");
                 var emailData = _this.emailGrid.get("value");
+                var webData = _this.webGrid.get("value");
                 var detailForm, editValues, submitValues;
                 var postUrl = _this.detailMode==='create' ? "party/updateParty" : "party/updateParty";
                 if ( _this.detailMode==='create') {
+                    //var detailValues = _this.createForm.get("value");
                     var detailValues = _this.createForm.get("value");
                     submitValues = {partyTypeEnumId: detailValues.partyTypeEnumId};
                     if (detailValues.partyTypeEnumId == "PtyPerson") {
@@ -641,21 +613,11 @@ define([
                 submitValues["postalData"] = JSON.stringify(postalData);
                 submitValues["emailData"] = JSON.stringify(emailData);
                 submitValues["phoneData"] = JSON.stringify(phoneData);
+                submitValues["webData"] = JSON.stringify(webData);
                 //var submitValuesStr = encodeURI(JSON.stringify(submitValues));
                 
                 // handle products
-                var productArray = [];
-                array.forEach(_this.productRows, function(product) {
-                    if(!_this.productGrid.selection[product.productId]) {
-                        productArray.push({productId: product.productId, fromDate:product.fromDate, 
-                         roleTypeId: product.roleTypeId, thruDate: new Date()});
-                    } else {
-                        delete _this.productGrid.selection[product.productId];
-                    }
-                });
-                for (var prodId in _this.productGrid.selection) {
-                    productArray.push({productId: prodId, fromDate: new Date()});
-                }
+                var productArray = _this.productGrid.get("value");
                 submitValues["productData"] = JSON.stringify(productArray);
                 console.log("PartyTab, submitValues: " + JSON.stringify(submitValues));
                     
@@ -677,8 +639,12 @@ define([
                         var rowList = query("#" + id, _this.gridNode);
                         if (rowList.length) {
                             var rowDiv = rowList[0];
-                            _this.grid.bodyNode.scrollTop = _this.grid.bodyNode.scrollHeight;
                             _this.grid.select({element: rowDiv});
+                            if ( _this.detailMode==='create') {
+                                _this.grid.bodyNode.scrollTop = _this.grid.bodyNode.scrollHeight;
+                            } else {
+                                _this.grid.bodyNode.scrollTop = rowDiv.offsetTop;
+                            }
                         }
                     }, 100);
                     return;
@@ -697,6 +663,7 @@ define([
         
         resize: function(dim) {
             this.inherited(arguments);
+            domGeometry.setMarginBox(this.topRegion.domNode, dim);
             dim.h -= 30;
             domGeometry.setMarginBox(this.grid.domNode, dim);
             this.grid.resize();
